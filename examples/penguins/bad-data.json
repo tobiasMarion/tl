@@ -1,0 +1,83 @@
+[
+  {
+    "species": "Adelie",
+    "island": "Torgersen",
+    "billLengthMm": 39.1,
+    "billDepthMm": 18.7,
+    "flipperLengthMm": 181,
+    "bodyMassG": 3750,
+    "sex": "male"
+  },
+  {
+    "species": "Adelie ",
+    "island": "Torgersen",
+    "billLengthMm": 39.5,
+    "billDepthMm": 17.4,
+    "flipperLengthMm": 186,
+    "bodyMassG": 3800,
+    "sex": "female"
+  },
+  {
+    "species": "Adelie",
+    "island": "Torgersen",
+    "billLengthMm": "NA",
+    "billDepthMm": "NA",
+    "flipperLengthMm": "NA",
+    "bodyMassG": "NA",
+    "sex": "NA"
+  },
+  {
+    "species": "adelie",
+    "island": "Torgersen",
+    "billLengthMm": 36.7,
+    "billDepthMm": 19.3,
+    "flipperLengthMm": 193,
+    "bodyMassG": 3450,
+    "sex": "female"
+  },
+  {
+    "species": "Chinstrap",
+    "island": "Dream",
+    "billLengthMm": "46.5",
+    "billDepthMm": "17.9",
+    "flipperLengthMm": 192,
+    "bodyMassG": 3500,
+    "sex": "female"
+  },
+  {
+    "species": "Chinstrap",
+    "billLengthMm": 50.0,
+    "billDepthMm": 19.5,
+    "flipperLengthMm": 196,
+    "bodyMassG": 3900,
+    "sex": "male"
+  },
+  {
+    "species": "Emperor",
+    "island": "Ross",
+    "billLengthMm": 70.2,
+    "billDepthMm": 22.1,
+    "flipperLengthMm": 340,
+    "bodyMassG": 30000,
+    "sex": "male"
+  },
+  {
+    "species": "Gentoo",
+    "island": "Biscoe",
+    "billLengthMm": 44.5,
+    "billDepthMm": 15.7,
+    "flipperLengthMm": 217,
+    "bodyMassG": 4875,
+    "sex": "."
+  },
+  {
+    "species": "Gentoo",
+    "island": "Biscoe",
+    "billLengthMm": 50.0,
+    "billDepthMm": 16.3,
+    "flipperLengthMm": 230,
+    "bodyMassG": 5700,
+    "sex": "MALE"
+  },
+  null
+]

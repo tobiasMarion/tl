@@ -42,6 +42,25 @@ type Features = typeof features.infer
 
 Optional fields become optional keys that also accept `undefined` (`age?: number | undefined`), because the project uses `exactOptionalPropertyTypes`.
 
+## Runtime validation
+
+- **Missing values:** `undefined`, `null`, and `NaN` count as missing. An optional field turns them into `undefined`; a required field reports them.
+- **Numbers** must be finite. `Infinity` is rejected.
+- **Timestamps** must be valid `Date` instances.
+- **Undeclared fields** are dropped from the output, so a CSV can carry extra columns such as an id.
+- **No coercion:** `'39.1'` is not a number. Parsing strings from CSV is part of loading data (see [Dataset](dataset.md)).
+
+Issues are grouped by field and problem, so 100k rows with one bad column produce one message, not 100k:
+
+```
+Invalid features: 3 problems found
+  - 'species' received unknown categories in 1 row (index 1): 'Adelie '. Expected one of 'Adelie' | 'Chinstrap' | 'Gentoo'
+  - 'bodyMassG' expected a finite number in 2 rows (index 1, 2), received 'NA'
+  - 'bodyMassG' is required but missing in 1 row (index 3). Mark it with .optional() if missing values are expected
+```
+
+Errors are thrown as `FeatureValidationError`, whose `issues` hold the field, code, row indexes, and up to 3 distinct sample values.
+
 ## Open questions
 
 - Distinguish `optional` from `nullable`, or treat them the same way.

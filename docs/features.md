@@ -12,7 +12,7 @@ const features = ml.features({
 
 type Features = typeof features.infer
 // {
-//   age?: number
+//   age?: number | undefined
 //   income: number
 //   employment: 'employed' | 'unemployed' | 'self-employed'
 //   ownsHome: boolean
@@ -30,13 +30,17 @@ type Features = typeof features.infer
 
 ## Field types
 
-| Constructor        | Inferred type      | Status  |
-|--------------------|--------------------|---------|
-| `ml.number()`      | `number`           | planned |
-| `ml.boolean()`     | `boolean`          | planned |
-| `ml.category([…])` | literal union      | planned |
-| `ml.timestamp()`   | `Date`             | planned |
-| `.optional()`      | `T \| undefined`   | planned |
+| Constructor        | Inferred type      | Status |
+|--------------------|--------------------|--------|
+| `ml.number()`      | `number`           | done   |
+| `ml.boolean()`     | `boolean`          | done   |
+| `ml.category([…])` | literal union      | done   |
+| `ml.timestamp()`   | `Date`             | done   |
+| `.optional()`      | `T \| undefined`   | done   |
+
+`ml.category([…])` needs at least one category and rejects duplicates, both at compile time and at runtime. Its declaration order is kept: it is the column order the encoder produces.
+
+Optional fields become optional keys that also accept `undefined` (`age?: number | undefined`), because the project uses `exactOptionalPropertyTypes`.
 
 ## Open questions
 

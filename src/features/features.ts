@@ -54,7 +54,7 @@ export const features = <const S extends Shape>(shape: S): Features<S> => {
   // every declared field passed its check, which is exactly InferShape<S>.
   const parseRows = (rows: readonly unknown[]): InferShape<S>[] => {
     const { values, issues } = validateRows(shape, rows, { indexed: true })
-    if (issues.length > 0) throw new FeatureValidationError(issues)
+    if (issues.length > 0) throw new FeatureValidationError(issues, parseRows)
     return values as InferShape<S>[]
   }
 
@@ -62,7 +62,7 @@ export const features = <const S extends Shape>(shape: S): Features<S> => {
     const { values, issues } = validateRows(shape, [record], {
       indexed: false
     })
-    if (issues.length > 0) throw new FeatureValidationError(issues)
+    if (issues.length > 0) throw new FeatureValidationError(issues, parse)
     return values[0] as InferShape<S>
   }
 

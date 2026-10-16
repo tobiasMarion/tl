@@ -62,6 +62,8 @@ Invalid features: 3 problems found
 
 Errors are thrown as `FeatureValidationError`, whose `issues` hold the field, code, row indexes, and up to 3 distinct sample values.
 
+The stack trace starts at the `parse`/`parseRows` call, so an uncaught error points at your line, not at the library. In a terminal the stack is colored (fields, received and expected values); `message` is always plain text, and `NO_COLOR` turns colors off. Run `npm run example:bad` to see it on a messy dataset.
+
 ## Zod compatibility through Standard Schema
 
 **Decision:** the DSL and its validator are our own, with no runtime dependencies. Compatibility with Zod, Valibot, and ArkType goes through [Standard Schema](https://standardschema.dev), the shared interface those libraries implement.

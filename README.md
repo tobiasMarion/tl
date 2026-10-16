@@ -130,6 +130,7 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 ├── src/
 │   ├── index.ts              # public `ml` namespace
 │   ├── standard-schema.ts    # Standard Schema interfaces (copied from the spec)
+│   ├── colors.ts             # ANSI colors for terminal output
 │   ├── features/             # schema DSL, inference, runtime validation
 │   ├── dataset/              # dataset, series, Train/Test types
 │   ├── validation/           # split, walk-forward, backtest folds

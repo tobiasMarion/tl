@@ -1,3 +1,4 @@
+import { bold, cyan, dim, green, red, useColors, yellow } from '../colors.ts'
 import type { AnyField } from './fields.ts'
 import type { Shape } from './infer.ts'
 
@@ -21,14 +22,36 @@ export interface FeatureIssue {
 
 export class FeatureValidationError extends Error {
   override readonly name = 'FeatureValidationError'
-  readonly issues: readonly FeatureIssue[]
+  declare readonly issues: readonly FeatureIssue[]
 
-  constructor(issues: readonly FeatureIssue[]) {
+  /** `caller` starts the stack trace there, so Node points at the user's line. */
+  constructor(
+    issues: readonly FeatureIssue[],
+    caller?: (...args: never[]) => unknown
+  ) {
     const count =
       issues.length === 1 ? '1 problem' : `${issues.length} problems`
+    const title = `Invalid features: ${count} found`
     const lines = issues.map(issue => `  - ${issue.message}`).join('\n')
-    super(`Invalid features: ${count} found\n${lines}`)
-    this.issues = issues
+    super(`${title}\n${lines}`)
+    // Non-enumerable: the message already lists the issues, so Node does not
+    // dump them again when the error is uncaught.
+    Object.defineProperty(this, 'issues', { value: issues, enumerable: false })
+    // V8-only, hence the `?.`.
+    Error.captureStackTrace?.(this, caller ?? FeatureValidationError)
+
+    // `message` stays plain for logs and tests; only the stack, which Node
+    // prints for uncaught errors, gets colors.
+    if (useColors && this.stack !== undefined) {
+      const frames = this.stack.slice(this.stack.indexOf('\n    at '))
+      const colored = issues
+        .map(
+          issue =>
+            `  ${red('✖')} ${coloredMessages.get(issue) ?? issue.message}`
+        )
+        .join('\n')
+      this.stack = `${bold(red(this.name))}: ${bold(title)}\n${colored}${frames}`
+    }
   }
 }
 
@@ -119,23 +142,51 @@ interface Group {
   readonly seen: Set<string>
 }
 
-const buildMessage = (group: Group, shape: Shape, indexed: boolean): string => {
-  const where = indexed ? formatRows(group.rows) : ''
-  const samples = group.received.map(formatValue).join(', ')
+/** How each part of a message is painted: identity for `message`, ANSI for the terminal. */
+interface Paint {
+  readonly field: (text: string) => string
+  readonly received: (text: string) => string
+  readonly expected: (text: string) => string
+  readonly hint: (text: string) => string
+}
+
+const same = (text: string): string => text
+const plain: Paint = { field: same, received: same, expected: same, hint: same }
+const terminal: Paint = {
+  field: text => bold(cyan(text)),
+  received: yellow,
+  expected: green,
+  hint: dim
+}
+
+// The colored version of each message, kept out of the issue objects.
+const coloredMessages = new WeakMap<FeatureIssue, string>()
+
+const buildMessage = (
+  group: Group,
+  shape: Shape,
+  indexed: boolean,
+  paint: Paint
+): string => {
+  const where = indexed ? paint.hint(formatRows(group.rows)) : ''
+  const samples = group.received
+    .map(value => paint.received(formatValue(value)))
+    .join(', ')
   const field = group.field === undefined ? undefined : shape[group.field]
   if (group.field === undefined || field === undefined) {
-    return `Expected a record object${where}, received ${samples}`
+    return `Expected ${paint.expected('a record object')}${where}, received ${samples}`
   }
-  const name = `'${group.field}'`
+  const name = paint.field(`'${group.field}'`)
+  const expected = paint.expected(describeExpected(field))
   switch (group.code) {
     case 'missing':
-      return `${name} is required but missing${where}. Mark it with .optional() if missing values are expected`
+      return `${name} is required but missing${where}. ${paint.hint('Mark it with .optional() if missing values are expected')}`
     case 'unknown_category':
-      return `${name} received unknown categories${where}: ${samples}. Expected ${describeExpected(field)}`
+      return `${name} received unknown categories${where}: ${samples}. Expected ${expected}`
     case 'invalid_timestamp':
       return `${name} received invalid dates${where}`
     default:
-      return `${name} expected ${describeExpected(field)}${where}, received ${samples}`
+      return `${name} expected ${expected}${where}, received ${samples}`
   }
 }
 
@@ -202,15 +253,19 @@ export const validateRows = (
     values.push(output)
   })
 
-  const issues = [...groups.values()].map(
-    (group): FeatureIssue => ({
+  const issues = [...groups.values()].map(group => {
+    const issue: FeatureIssue = {
       field: group.field,
       code: group.code,
       rows: group.rows,
       received: group.received,
-      message: buildMessage(group, shape, indexed)
-    })
-  )
+      message: buildMessage(group, shape, indexed, plain)
+    }
+    if (useColors) {
+      coloredMessages.set(issue, buildMessage(group, shape, indexed, terminal))
+    }
+    return issue
+  })
 
   return { values, issues }
 }

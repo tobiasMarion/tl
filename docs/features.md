@@ -1,6 +1,6 @@
 # Feature DSL
 
-The DSL defines the data schema using only the library. Users don't need to import Zod or any other validator; if the library uses one, it stays an internal detail.
+The DSL defines the data schema using only the library. Users don't need to import Zod or any other validator.
 
 ```ts
 const penguins = ml.features({
@@ -64,8 +64,26 @@ Invalid features: 3 problems found
 
 Errors are thrown as `FeatureValidationError`, whose `issues` hold the field, code, row indexes, and up to 3 distinct sample values.
 
+## Zod compatibility through Standard Schema
+
+**Decision:** the DSL and its validator are our own, with no runtime dependencies. Compatibility with Zod, Valibot, and ArkType goes through [Standard Schema](https://standardschema.dev), the shared interface those libraries implement.
+
+**Why not build on Zod:**
+
+- **Different jobs.** Zod describes the *shape of a value*. The DSL describes the *meaning of a column*: its kind, its category order, and whether it needs a missing-value policy. The pipeline types inspect that meaning. Building them on Zod's internal types would couple the most delicate part of the API to a dependency, and hover types would show `ZodObject<…>` instead of readable records.
+- **Tabular errors.** Zod reports one issue per value. For datasets we want issues grouped per column.
+- **Missing-value semantics.** In ML, `NaN` and `null` usually mean missing. Zod rejects `NaN` in `z.number()`.
+
+**How compatibility works:**
+
+| Direction | Mechanism | Status |
+|-----------|-----------|--------|
+| TL → ecosystem | Features implement `~standard` (Standard Schema V1), so tools that accept Zod/Valibot/ArkType through Standard Schema accept them too | done |
+| Zod → TL | `ml.fromSchema(schema)` reads the types from `StandardSchemaV1.InferOutput` and the categories and required fields from Standard JSON Schema (`~standard.jsonSchema`) | planned |
+
+The Standard Schema interface is copied into `src/standard-schema.ts`, as the spec recommends, so there is no dependency on `@standard-schema/spec`.
+
 ## Open questions
 
 - Distinguish `optional` from `nullable`, or treat them the same way.
 - Define the `target` in the schema or separately.
-- Use an internal validation dependency or write our own.

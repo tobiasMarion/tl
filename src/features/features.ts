@@ -1,3 +1,4 @@
+import type { StandardSchemaV1 } from '../standard-schema.ts'
 import type { InferShape, Shape } from './infer.ts'
 import { FeatureValidationError, validateRows } from './validate.ts'
 
@@ -8,7 +9,8 @@ const FIELD_KINDS: ReadonlySet<unknown> = new Set([
   'timestamp'
 ])
 
-export interface Features<S extends Shape> {
+export interface Features<S extends Shape>
+  extends StandardSchemaV1<InferShape<S>> {
   readonly fields: S
   /** Field names, in declaration order. */
   readonly keys: readonly Extract<keyof S, string>[]
@@ -64,6 +66,19 @@ export const features = <const S extends Shape>(shape: S): Features<S> => {
     return values[0] as InferShape<S>
   }
 
+  const validate = (value: unknown): StandardSchemaV1.Result<InferShape<S>> => {
+    const { values, issues } = validateRows(shape, [value], { indexed: false })
+    if (issues.length > 0) {
+      return {
+        issues: issues.map(issue => ({
+          message: issue.message,
+          path: issue.field === undefined ? undefined : [issue.field]
+        }))
+      }
+    }
+    return { value: values[0] as InferShape<S> }
+  }
+
   return Object.freeze({
     fields: shape,
     keys,
@@ -73,6 +88,7 @@ export const features = <const S extends Shape>(shape: S): Features<S> => {
       )
     },
     parse,
-    parseRows
+    parseRows,
+    '~standard': Object.freeze({ version: 1, vendor: 'tl', validate })
   })
 }

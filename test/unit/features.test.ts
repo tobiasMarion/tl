@@ -160,3 +160,22 @@ describe('parseRows', () => {
     )
   })
 })
+
+describe('Standard Schema', () => {
+  const { validate, vendor, version } = penguins['~standard']
+
+  test('exposes vendor and version', () => {
+    assert.equal(vendor, 'tl')
+    assert.equal(version, 1)
+  })
+
+  test('returns the value on success', () => {
+    assert.deepEqual(validate(valid), { value: valid })
+  })
+
+  test('returns issues with a path on failure', () => {
+    const result = validate({ ...valid, species: 'Emperor' })
+    assert.ok('issues' in result && result.issues !== undefined)
+    assert.deepEqual(result.issues[0]?.path, ['species'])
+  })
+})

@@ -114,7 +114,7 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 | Document | Contents |
 |----------|----------|
 | [Design principles](docs/principles.md) | Explicit decisions, time series from the start, static + runtime typing |
-| [Feature DSL](docs/features.md) | Field types, inference, validation, optional fields |
+| [Feature DSL](docs/features.md) | Field types, inference, validation, Zod compatibility through Standard Schema |
 | [Dataset and validation](docs/dataset.md) | Splits, walk-forward, branded types, leakage prevention |
 | [Preprocessing](docs/preprocessing.md) | Transformers, temporal features, missing values and unknown categories |
 | [Pipeline](docs/pipeline.md) | Guided workflow, configured vs. fitted model, pending decisions, backtest |
@@ -129,6 +129,7 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 .
 ├── src/
 │   ├── index.ts              # public `ml` namespace
+│   ├── standard-schema.ts    # Standard Schema V1 interface (copied from the spec)
 │   ├── features/             # schema DSL, inference, runtime validation
 │   ├── dataset/              # dataset, series, Train/Test types
 │   ├── validation/           # split, walk-forward, backtest folds

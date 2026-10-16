@@ -1,4 +1,4 @@
-import { type Infer, ml } from '../../src/index.ts'
+import { type Infer, ml, type StandardSchemaV1 } from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
 const penguins = ml.features({
@@ -25,6 +25,10 @@ type _infersRecord = Expect<
 >
 
 type _inferHelper = Expect<Equal<Infer<typeof penguins>, Penguin>>
+
+type _standardOutput = Expect<
+  Equal<StandardSchemaV1.InferOutput<typeof penguins>, Penguin>
+>
 
 type _keys = Expect<
   Equal<

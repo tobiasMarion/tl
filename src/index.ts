@@ -29,3 +29,4 @@ export type {
   TimestampField
 } from './features/index.ts'
 export { FeatureValidationError } from './features/index.ts'
+export type { StandardSchemaV1 } from './standard-schema.ts'

@@ -6,21 +6,24 @@ import {
   category,
   type NumberField,
   number,
+  type Optional,
   type TimestampField,
   timestamp
 } from '../../src/features/fields.ts'
 import type { Equal, Expect } from './helpers.ts'
 
 // Constructors start required
-type _number = Expect<Equal<ReturnType<typeof number>, NumberField<false>>>
-type _boolean = Expect<Equal<ReturnType<typeof boolean>, BooleanField<false>>>
-type _timestamp = Expect<
-  Equal<ReturnType<typeof timestamp>, TimestampField<false>>
->
+type _number = Expect<Equal<ReturnType<typeof number>, NumberField>>
+type _boolean = Expect<Equal<ReturnType<typeof boolean>, BooleanField>>
+type _timestamp = Expect<Equal<ReturnType<typeof timestamp>, TimestampField>>
 
-// optional() flips the flag in the type
+// optional() wraps the field
 const optionalNumber = number().optional()
-type _optional = Expect<Equal<typeof optionalNumber, NumberField<true>>>
+type _optional = Expect<Equal<typeof optionalNumber, Optional<NumberField>>>
+type _optionalFlag = Expect<Equal<typeof optionalNumber.isOptional, true>>
+
+// @ts-expect-error — a field is made optional only once
+number().optional().optional()
 
 // category() keeps the literals, without `as const`
 const sex = category(['male', 'female'])
@@ -29,7 +32,10 @@ type _category = Expect<Equal<typeof sex, CategoryField<'male' | 'female'>>>
 // optional() keeps the categories
 const optionalSex = sex.optional()
 type _optionalCategory = Expect<
-  Equal<typeof optionalSex, CategoryField<'male' | 'female', true>>
+  Equal<typeof optionalSex, Optional<CategoryField<'male' | 'female'>>>
+>
+type _optionalCategories = Expect<
+  Equal<typeof optionalSex.categories, readonly ('male' | 'female')[]>
 >
 
 // AnyField accepts required and optional fields of every kind

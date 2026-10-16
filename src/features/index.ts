@@ -7,6 +7,8 @@ export {
   category,
   type NumberField,
   number,
+  type Optional,
+  type RequiredField,
   type TimestampField,
   timestamp
 } from './fields.ts'

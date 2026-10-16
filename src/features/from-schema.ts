@@ -10,7 +10,9 @@ import {
   type CategoryField,
   category,
   type NumberField,
-  number
+  number,
+  type Optional,
+  type RequiredField
 } from './fields.ts'
 import type { Simplify } from './infer.ts'
 
@@ -25,15 +27,20 @@ type IsOptionalKey<T, K extends keyof T> =
         ? true
         : false
 
+type WithPresence<
+  Field extends RequiredField,
+  IsOptional extends boolean
+> = IsOptional extends true ? Optional<Field> : Field
+
 /** The field a value type maps to, or `never` when it needs an override. */
 type AutoField<Value, IsOptional extends boolean> = [Value] extends [number]
-  ? NumberField<IsOptional>
+  ? WithPresence<NumberField, IsOptional>
   : [Value] extends [boolean]
-    ? BooleanField<IsOptional>
+    ? WithPresence<BooleanField, IsOptional>
     : [Value] extends [string]
       ? string extends Value
         ? never
-        : CategoryField<Value, IsOptional>
+        : WithPresence<CategoryField<Value>, IsOptional>
       : never
 
 type AutoShape<T> = {
@@ -94,7 +101,7 @@ const fieldFromJsonSchema = (
   const [type, ...rest] = types.filter(type => type !== 'null')
   if (type === undefined || rest.length > 0) return undefined
 
-  let field: AnyField | undefined
+  let field: RequiredField | undefined
   if (type === 'number' || type === 'integer') {
     field = number()
   } else if (type === 'boolean') {

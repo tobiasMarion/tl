@@ -27,6 +27,8 @@ export type {
   Features,
   IssueCode,
   NumberField,
+  Optional,
+  RequiredField,
   Shape,
   TimestampField
 } from './features/index.ts'

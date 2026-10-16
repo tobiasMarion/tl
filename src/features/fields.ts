@@ -1,80 +1,85 @@
-export interface NumberField<IsOptional extends boolean = false> {
+export interface NumberField {
   readonly kind: 'number'
-  readonly isOptional: IsOptional
-  optional(): NumberField<true>
+  readonly isOptional: false
+  optional(): Optional<NumberField>
 }
 
-export interface BooleanField<IsOptional extends boolean = false> {
+export interface BooleanField {
   readonly kind: 'boolean'
-  readonly isOptional: IsOptional
-  optional(): BooleanField<true>
+  readonly isOptional: false
+  optional(): Optional<BooleanField>
 }
 
-export interface TimestampField<IsOptional extends boolean = false> {
+export interface TimestampField {
   readonly kind: 'timestamp'
-  readonly isOptional: IsOptional
-  optional(): TimestampField<true>
+  readonly isOptional: false
+  optional(): Optional<TimestampField>
 }
 
-export interface CategoryField<
-  Category extends string = string,
-  IsOptional extends boolean = false
-> {
+export interface CategoryField<Category extends string = string> {
   readonly kind: 'category'
-  readonly isOptional: IsOptional
+  readonly isOptional: false
   readonly categories: readonly Category[]
-  optional(): CategoryField<Category, true>
+  optional(): Optional<CategoryField<Category>>
 }
 
+export type RequiredField =
+  | NumberField
+  | BooleanField
+  | CategoryField
+  | TimestampField
+
+/**
+ * A field whose values may be missing, built with `.optional()`. A wrapper
+ * instead of a flag on each field, so hovers read `Optional<NumberField>`.
+ * It has no `optional()`: calling it twice is a compile-time error.
+ */
+export type Optional<Field extends RequiredField> = Omit<
+  Field,
+  'isOptional' | 'optional'
+> & { readonly isOptional: true }
+
+// Listed one by one: `Optional<RequiredField>` would keep only the keys shared
+// by every field and lose `categories`.
 export type AnyField =
-  | NumberField<boolean>
-  | BooleanField<boolean>
-  | CategoryField<string, boolean>
-  | TimestampField<boolean>
+  | RequiredField
+  | Optional<NumberField>
+  | Optional<BooleanField>
+  | Optional<CategoryField>
+  | Optional<TimestampField>
 
-const numberField = <IsOptional extends boolean>(
-  isOptional: IsOptional
-): NumberField<IsOptional> =>
-  Object.freeze({
+const toOptional = <Field extends RequiredField>({
+  optional: _,
+  ...field
+}: Field): Optional<Field> =>
+  Object.freeze({ ...field, isOptional: true as const })
+
+export const number = (): NumberField => {
+  const field: NumberField = Object.freeze({
     kind: 'number',
-    isOptional,
-    optional: () => numberField(true)
+    isOptional: false,
+    optional: () => toOptional(field)
   })
+  return field
+}
 
-export const number = (): NumberField => numberField(false)
-
-const booleanField = <IsOptional extends boolean>(
-  isOptional: IsOptional
-): BooleanField<IsOptional> =>
-  Object.freeze({
+export const boolean = (): BooleanField => {
+  const field: BooleanField = Object.freeze({
     kind: 'boolean',
-    isOptional,
-    optional: () => booleanField(true)
+    isOptional: false,
+    optional: () => toOptional(field)
   })
+  return field
+}
 
-export const boolean = (): BooleanField => booleanField(false)
-
-const timestampField = <IsOptional extends boolean>(
-  isOptional: IsOptional
-): TimestampField<IsOptional> =>
-  Object.freeze({
+export const timestamp = (): TimestampField => {
+  const field: TimestampField = Object.freeze({
     kind: 'timestamp',
-    isOptional,
-    optional: () => timestampField(true)
+    isOptional: false,
+    optional: () => toOptional(field)
   })
-
-export const timestamp = (): TimestampField => timestampField(false)
-
-const categoryField = <Category extends string, IsOptional extends boolean>(
-  categories: readonly Category[],
-  isOptional: IsOptional
-): CategoryField<Category, IsOptional> =>
-  Object.freeze({
-    kind: 'category',
-    isOptional,
-    categories,
-    optional: () => categoryField(categories, true)
-  })
+  return field
+}
 
 export const category = <
   const Categories extends readonly [string, ...string[]]
@@ -96,5 +101,11 @@ export const category = <
     }
     seen.add(value)
   }
-  return categoryField(Object.freeze([...categories]), false)
+  const field: CategoryField<Categories[number]> = Object.freeze({
+    kind: 'category',
+    isOptional: false,
+    categories: Object.freeze([...categories]),
+    optional: () => toOptional(field)
+  })
+  return field
 }

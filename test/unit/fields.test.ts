@@ -27,8 +27,13 @@ describe('number, boolean, timestamp', () => {
       assert.equal(required.isOptional, false)
     })
 
-    test(`${name}() is frozen`, () => {
+    test(`${name}() is frozen, and so is its optional copy`, () => {
       assert.ok(Object.isFrozen(create()))
+      assert.ok(Object.isFrozen(create().optional()))
+    })
+
+    test(`${name}().optional() has no optional() of its own`, () => {
+      assert.ok(!('optional' in create().optional()))
     })
   }
 })

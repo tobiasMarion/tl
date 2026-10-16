@@ -1,4 +1,4 @@
-import type { AnyField, CategoryField } from './fields.ts'
+import type { AnyField } from './fields.ts'
 
 export type Shape = Readonly<Record<string, AnyField>>
 
@@ -8,12 +8,13 @@ interface ValueByKind {
   timestamp: Date
 }
 
-export type FieldValue<Field extends AnyField> =
-  Field extends CategoryField<infer Category, boolean>
-    ? Category
-    : Field['kind'] extends keyof ValueByKind
-      ? ValueByKind[Field['kind']]
-      : never
+export type FieldValue<Field extends AnyField> = Field extends {
+  readonly categories: readonly (infer Category)[]
+}
+  ? Category
+  : Field['kind'] extends keyof ValueByKind
+    ? ValueByKind[Field['kind']]
+    : never
 
 export type OptionalKeys<S extends Shape> = {
   [K in keyof S]: S[K]['isOptional'] extends true ? K : never

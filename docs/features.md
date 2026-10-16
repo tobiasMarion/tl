@@ -43,6 +43,19 @@ penguins.parseRows(rows) // many records, issues grouped by field
 
 `ml.category([…])` needs at least one category and rejects duplicates, both at compile time and at runtime. Its declaration order is kept: it is the column order the encoder produces.
 
+`.optional()` wraps the field type instead of flipping a flag on it, so hovers stay readable:
+
+```ts
+// typeof penguins.fields
+{
+  readonly species: CategoryField<'Adelie' | 'Chinstrap' | 'Gentoo'>
+  readonly billLengthMm: Optional<NumberField>
+  readonly sex: Optional<CategoryField<'male' | 'female'>>
+}
+```
+
+The runtime copy only changes `isOptional` to `true`. It has no `.optional()` of its own, so `ml.number().optional().optional()` is a compile-time error.
+
 ## Runtime validation
 
 - **Missing values:** `undefined`, `null`, and `NaN` count as missing. An optional field turns them into `undefined`; a required field reports them.

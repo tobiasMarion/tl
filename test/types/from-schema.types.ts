@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { type CategoryField, ml, type NumberField } from '../../src/index.ts'
+import {
+  type CategoryField,
+  ml,
+  type NumberField,
+  type Optional
+} from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
 const Penguin = z.object({
@@ -26,12 +31,12 @@ type _record = Expect<
 type _species = Expect<
   Equal<
     typeof penguins.fields.species,
-    CategoryField<'Adelie' | 'Chinstrap' | 'Gentoo', false>
+    CategoryField<'Adelie' | 'Chinstrap' | 'Gentoo'>
   >
 >
 
 type _optional = Expect<
-  Equal<typeof penguins.fields.billLengthMm, NumberField<true>>
+  Equal<typeof penguins.fields.billLengthMm, Optional<NumberField>>
 >
 
 const Observation = z.object({

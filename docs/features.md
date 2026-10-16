@@ -3,20 +3,23 @@
 The DSL defines the data schema using only the library. Users don't need to import Zod or any other validator; if the library uses one, it stays an internal detail.
 
 ```ts
-const features = ml.features({
-  age: ml.number().optional(),
-  income: ml.number(),
-  employment: ml.category(['employed', 'unemployed', 'self-employed']),
-  ownsHome: ml.boolean()
+const penguins = ml.features({
+  species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
+  billLengthMm: ml.number().optional(),
+  isAdult: ml.boolean(),
+  observedAt: ml.timestamp()
 })
 
-type Features = typeof features.infer
+type Penguin = typeof penguins.infer // or Infer<typeof penguins>
 // {
-//   age?: number | undefined
-//   income: number
-//   employment: 'employed' | 'unemployed' | 'self-employed'
-//   ownsHome: boolean
+//   species: 'Adelie' | 'Chinstrap' | 'Gentoo'
+//   billLengthMm?: number | undefined
+//   isAdult: boolean
+//   observedAt: Date
 // }
+
+penguins.parse(record) // one record
+penguins.parseRows(rows) // many records, issues grouped by field
 ```
 
 ## Requirements
@@ -50,7 +53,7 @@ Optional fields become optional keys that also accept `undefined` (`age?: number
 - **Undeclared fields** are dropped from the output, so a CSV can carry extra columns such as an id.
 - **No coercion:** `'39.1'` is not a number. Parsing strings from CSV is part of loading data (see [Dataset](dataset.md)).
 
-Issues are grouped by field and problem, so 100k rows with one bad column produce one message, not 100k:
+`parseRows` groups issues by field and problem, so 100k rows with one bad column produce one message, not 100k:
 
 ```
 Invalid features: 3 problems found

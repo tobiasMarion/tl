@@ -85,6 +85,7 @@ export const checkValue = (field: AnyField, value: unknown): Check => {
         ? { ok: true, value }
         : { ok: false, code: 'invalid_type' }
     case 'category':
+    case 'ordered-category':
       if (typeof value !== 'string') return { ok: false, code: 'invalid_type' }
       return field.categories.includes(value)
         ? { ok: true, value }
@@ -122,6 +123,8 @@ const describeExpected = (field: AnyField): string => {
       return 'a boolean'
     case 'category':
       return `one of ${field.categories.map(formatValue).join(' | ')}`
+    case 'ordered-category':
+      return `one of ${field.categories.map(formatValue).join(' < ')}`
     case 'timestamp':
       return 'a Date'
   }

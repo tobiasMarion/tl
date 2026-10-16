@@ -148,7 +148,8 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 │   ├── types/                # type tests (expect-type, @ts-expect-error)
 │   └── fixtures/             # synthetic data with known parameters
 ├── examples/                 # complete runnable workflows, one folder each
-│   └── penguins/             # index.ts (pipeline), data.json, bad-data.json
+│   ├── penguins/             # index.ts (pipeline), data.json, bad-data.json
+│   └── diamonds/             # regression with ordered categories
 └── docs/
     └── algorithms/
 ```

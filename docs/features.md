@@ -38,6 +38,7 @@ penguins.parseRows(rows) // many records, issues grouped by field
 | `ml.number()`      | `number`           | done   |
 | `ml.boolean()`     | `boolean`          | done   |
 | `ml.category([…])` | literal union      | done   |
+| `ml.orderedCategory([…])` | literal union, ranked in list order | done |
 | `ml.timestamp()`   | `Date`             | done   |
 | `.optional()`      | `T \| undefined`   | done   |
 
@@ -55,6 +56,20 @@ penguins.parseRows(rows) // many records, issues grouped by field
 ```
 
 The runtime copy only changes `isOptional` to `true`. It has no `.optional()` of its own, so `ml.number().optional().optional()` is a compile-time error.
+
+## Ordered categories
+
+Some categories have a rank: `'poor' < 'fair' < 'good'`, `'cold' < 'warm' < 'hot'`. That order is a fact about the data, not a preprocessing choice, so it belongs in the schema:
+
+```ts
+const reviews = ml.features({
+  condition: ml.orderedCategory(['poor', 'fair', 'good']) // lowest to highest
+})
+```
+
+The value type is the same literal union as `ml.category`, and validation is the same; error messages show the order (`one of 'poor' < 'fair' < 'good'`). The difference is for later steps: the encoder can turn an ordered category into a single ranked column instead of one-hot columns, and a tree can split on `≤ 'fair'`. `ml.fromSchema` maps `z.enum` to `ml.category`; pass an `ml.orderedCategory` override when the order matters.
+
+See `examples/diamonds`, where `cut`, `color` and `clarity` are graded scales (`npm run example:diamonds`).
 
 ## Runtime validation
 

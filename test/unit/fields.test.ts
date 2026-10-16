@@ -4,6 +4,7 @@ import {
   boolean,
   category,
   number,
+  orderedCategory,
   timestamp
 } from '../../src/features/fields.ts'
 
@@ -75,6 +76,28 @@ describe('category', () => {
     assert.throws(() => category([1] as never), {
       name: 'TypeError',
       message: 'ml.category() only accepts strings, received 1'
+    })
+  })
+})
+
+describe('orderedCategory', () => {
+  test('keeps the order from lowest to highest', () => {
+    const field = orderedCategory(['cold', 'warm', 'hot'])
+    assert.equal(field.kind, 'ordered-category')
+    assert.deepEqual(field.categories, ['cold', 'warm', 'hot'])
+  })
+
+  test('optional() keeps the order', () => {
+    const optional = orderedCategory(['low', 'high']).optional()
+    assert.equal(optional.kind, 'ordered-category')
+    assert.equal(optional.isOptional, true)
+    assert.deepEqual(optional.categories, ['low', 'high'])
+  })
+
+  test('names itself in errors', () => {
+    assert.throws(() => orderedCategory(['a', 'a']), {
+      name: 'TypeError',
+      message: "ml.orderedCategory() received 'a' more than once"
     })
   })
 })

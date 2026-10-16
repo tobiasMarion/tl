@@ -8,6 +8,8 @@ export {
   type NumberField,
   number,
   type Optional,
+  type OrderedCategoryField,
+  orderedCategory,
   type RequiredField,
   type TimestampField,
   timestamp

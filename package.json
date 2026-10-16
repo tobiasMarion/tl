@@ -48,6 +48,7 @@
     "test:coverage": "node --test --experimental-test-coverage \"test/**/*.test.ts\"",
     "example": "node examples/penguins/index.ts",
     "example:bad": "node examples/penguins/index.ts --bad",
+    "example:diamonds": "node examples/diamonds/index.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "check": "npm run lint && npm run typecheck && npm test",

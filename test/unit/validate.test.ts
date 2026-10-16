@@ -5,6 +5,7 @@ import {
   boolean,
   category,
   number,
+  orderedCategory,
   timestamp
 } from '../../src/features/fields.ts'
 import {
@@ -55,6 +56,15 @@ describe('checkValue', () => {
 
   test('rejects unknown categories', () => {
     assert.deepEqual(checkValue(category(['a', 'b']), 'c'), {
+      ok: false,
+      code: 'unknown_category'
+    })
+  })
+
+  test('checks ordered categories like categories', () => {
+    const field = orderedCategory(['low', 'high'])
+    assert.deepEqual(checkValue(field, 'low'), { ok: true, value: 'low' })
+    assert.deepEqual(checkValue(field, 'mid'), {
       ok: false,
       code: 'unknown_category'
     })
@@ -149,6 +159,18 @@ describe('validateRows', () => {
     assert.match(
       issues[0]?.message ?? '',
       /in 8 rows \(index 0, 1, 2, 3, 4, …\)/
+    )
+  })
+
+  test('shows the order of ordered categories', () => {
+    const { issues } = validateRows(
+      { size: orderedCategory(['S', 'M', 'L']) },
+      [{ size: 'XL' }],
+      { indexed: false }
+    )
+    assert.equal(
+      issues[0]?.message,
+      "'size' received unknown categories: 'XL'. Expected one of 'S' < 'M' < 'L'"
     )
   })
 

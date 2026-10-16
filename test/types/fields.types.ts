@@ -7,6 +7,8 @@ import {
   type NumberField,
   number,
   type Optional,
+  type OrderedCategoryField,
+  orderedCategory,
   type TimestampField,
   timestamp
 } from '../../src/features/fields.ts'
@@ -38,6 +40,19 @@ type _optionalCategories = Expect<
   Equal<typeof optionalSex.categories, readonly ('male' | 'female')[]>
 >
 
+// orderedCategory() keeps the literals and wraps like any field
+const temperature = orderedCategory(['cold', 'warm', 'hot'])
+type _ordered = Expect<
+  Equal<typeof temperature, OrderedCategoryField<'cold' | 'warm' | 'hot'>>
+>
+const optionalTemperature = temperature.optional()
+type _optionalOrdered = Expect<
+  Equal<
+    typeof optionalTemperature,
+    Optional<OrderedCategoryField<'cold' | 'warm' | 'hot'>>
+  >
+>
+
 // AnyField accepts required and optional fields of every kind
 export const fields: AnyField[] = [
   number(),
@@ -45,7 +60,9 @@ export const fields: AnyField[] = [
   boolean(),
   timestamp().optional(),
   sex,
-  optionalSex
+  optionalSex,
+  temperature,
+  optionalTemperature
 ]
 
 // @ts-expect-error — at least one category is required

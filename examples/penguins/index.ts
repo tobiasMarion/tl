@@ -18,7 +18,10 @@ const penguins = ml.features({
   billDepthMm: ml.number().optional(),
   flipperLengthMm: ml.number().optional(),
   bodyMassG: ml.number().optional(),
-  sex: ml.category(['male', 'female']).optional()
+  sex: ml.category(['male', 'female']).optional(),
+  // Not in the original dataset: a made-up field-assessment score, from lowest
+  // to highest, to show ordered categories.
+  bodyCondition: ml.orderedCategory(['poor', 'fair', 'good'])
 })
 
 type Penguin = typeof penguins.infer
@@ -45,7 +48,7 @@ console.log(`${records.length} valid penguins`)
 //     bodyMassG: 'median',
 //     sex: 'drop'
 //   })
-//   .encode(['island', 'sex'], { unknown: 'error' })
+//   .encode(['island', 'sex', 'bodyCondition'], { unknown: 'error' })
 //   .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
 //   .estimator(ml.knn({ k: 5, distance: 'euclidean' }))
 

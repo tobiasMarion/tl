@@ -4,6 +4,7 @@ import {
   features,
   fromSchema,
   number,
+  orderedCategory,
   timestamp
 } from './features/index.ts'
 
@@ -13,6 +14,7 @@ export const ml = Object.freeze({
   number,
   boolean,
   category,
+  orderedCategory,
   timestamp
 })
 
@@ -28,6 +30,7 @@ export type {
   IssueCode,
   NumberField,
   Optional,
+  OrderedCategoryField,
   RequiredField,
   Shape,
   TimestampField

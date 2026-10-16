@@ -6,6 +6,7 @@ const FIELD_KINDS: ReadonlySet<unknown> = new Set([
   'number',
   'boolean',
   'category',
+  'ordered-category',
   'timestamp'
 ])
 
@@ -37,7 +38,7 @@ const assertShape = (shape: unknown): void => {
         : undefined
     if (!FIELD_KINDS.has(kind)) {
       throw new TypeError(
-        `ml.features(): '${name}' is not a field. Use ml.number(), ml.boolean(), ml.category([...]) or ml.timestamp()`
+        `ml.features(): '${name}' is not a field. Use ml.number(), ml.boolean(), ml.category([...]), ml.orderedCategory([...]) or ml.timestamp()`
       )
     }
   }

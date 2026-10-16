@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import { describe, test } from 'node:test'
 import {
   boolean,
@@ -176,5 +177,41 @@ describe('FeatureValidationError', () => {
       error.message,
       "Invalid features: 2 problems found\n  - 'a' expected a finite number, received 'x'\n  - 'b' expected a boolean, received 'y'"
     )
+  })
+
+  test('keeps issues out of the enumerable keys', () => {
+    const error = new FeatureValidationError([])
+    assert.ok(!Object.keys(error).includes('issues'))
+    assert.deepEqual(error.issues, [])
+  })
+
+  // Colors are decided when the module loads, so each case runs in a child process.
+  const throwInChild = (env: Record<string, string>) => {
+    const script = `
+      import { ml } from ${JSON.stringify(import.meta.resolve('../../src/index.ts'))}
+      try {
+        ml.features({ a: ml.number() }).parse({ a: 'x' })
+      } catch (error) {
+        console.log(JSON.stringify({ message: error.message, stack: error.stack }))
+      }`
+    const { NO_COLOR: _, FORCE_COLOR: __, ...base } = process.env
+    const child = spawnSync(
+      process.execPath,
+      ['--input-type=module', '--eval', script],
+      { env: { ...base, ...env }, encoding: 'utf8' }
+    )
+    return JSON.parse(child.stdout) as { message: string; stack: string }
+  }
+  const ANSI = '\u001b['
+
+  test('colors only the stack when colors are on', () => {
+    const { message, stack } = throwInChild({ FORCE_COLOR: '1' })
+    assert.ok(!message.includes(ANSI))
+    assert.ok(stack.includes(ANSI))
+  })
+
+  test('NO_COLOR turns colors off', () => {
+    const { stack } = throwInChild({ FORCE_COLOR: '1', NO_COLOR: '1' })
+    assert.ok(!stack.includes(ANSI))
   })
 })

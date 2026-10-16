@@ -161,6 +161,33 @@ describe('parseRows', () => {
   })
 })
 
+describe('FeatureValidationError stack', () => {
+  const firstFrame = (fn: () => unknown): string => {
+    try {
+      fn()
+    } catch (error) {
+      assert.ok(error instanceof FeatureValidationError)
+      const frame = error.stack?.split('\n').find(line => /^\s+at /.test(line))
+      return frame ?? ''
+    }
+    assert.fail('expected a FeatureValidationError')
+  }
+
+  test('starts at the parse call', () => {
+    assert.match(
+      firstFrame(() => penguins.parse({})),
+      /features\.test\.ts/
+    )
+  })
+
+  test('starts at the parseRows call', () => {
+    assert.match(
+      firstFrame(() => penguins.parseRows([{}])),
+      /features\.test\.ts/
+    )
+  })
+})
+
 describe('Standard Schema', () => {
   const { validate, vendor, version } = penguins['~standard']
 

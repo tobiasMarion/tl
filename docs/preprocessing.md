@@ -32,6 +32,10 @@ A category that didn't appear in training can show up in `predict`, for example 
 .encode('employment', { unknown: 'error' }) // 'error' | 'ignore'
 ```
 
+## Ordered categories
+
+An [`ml.orderedCategory`](features.md#ordered-categories) keeps its rank through encoding: by default it becomes one column with its position in the declared order (`'poor'` → 0, `'fair'` → 1, `'good'` → 2), while an `ml.category` becomes one-hot columns. The default can be overridden in `encode`.
+
 ## Column order
 
 The encoder stores the category order learned in `fit` and reuses that same order in `transform`. The output columns have a stable, deterministic order.

@@ -100,7 +100,7 @@ prices.split({ test: 0.2, seed: 42 })
 
 | #  | Milestone                       | Deliverables |
 |----|---------------------------------|--------------|
-| M1 | **Feature DSL**                 | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests |
+| M1 | **Feature DSL**                 | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests, Standard Schema support and `ml.fromSchema` for Zod/Valibot/ArkType schemas |
 | M2 | **Dataset, split, and validation** | `dataset` and `series`; random and chronological split; walk-forward (expanding/rolling window, gap); branded `Train`/`Test` |
 | M3 | **Preprocessing**               | Imputation, one-hot encoding, standardization, lag and rolling features, target horizon; learned state kept separate from configuration |
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
@@ -114,7 +114,7 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 | Document | Contents |
 |----------|----------|
 | [Design principles](docs/principles.md) | Explicit decisions, time series from the start, static + runtime typing |
-| [Feature DSL](docs/features.md) | Field types, inference, validation, optional fields |
+| [Feature DSL](docs/features.md) | Field types, inference, validation, Zod compatibility through Standard Schema |
 | [Dataset and validation](docs/dataset.md) | Splits, walk-forward, branded types, leakage prevention |
 | [Preprocessing](docs/preprocessing.md) | Transformers, temporal features, missing values and unknown categories |
 | [Pipeline](docs/pipeline.md) | Guided workflow, configured vs. fitted model, pending decisions, backtest |
@@ -129,6 +129,8 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 .
 ├── src/
 │   ├── index.ts              # public `ml` namespace
+│   ├── standard-schema.ts    # Standard Schema interfaces (copied from the spec)
+│   ├── colors.ts             # ANSI colors for terminal output
 │   ├── features/             # schema DSL, inference, runtime validation
 │   ├── dataset/              # dataset, series, Train/Test types
 │   ├── validation/           # split, walk-forward, backtest folds
@@ -145,7 +147,9 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 │   ├── unit/                 # runtime and numerical tests
 │   ├── types/                # type tests (expect-type, @ts-expect-error)
 │   └── fixtures/             # synthetic data with known parameters
-├── examples/                 # complete runnable workflows
+├── examples/                 # complete runnable workflows, one folder each
+│   ├── penguins/             # index.ts (pipeline), data.json, bad-data.json
+│   └── diamonds/             # regression with ordered categories
 └── docs/
     └── algorithms/
 ```

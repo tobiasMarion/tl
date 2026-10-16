@@ -21,50 +21,49 @@ Priorities: correctness, understanding, and interface quality. Performance comes
 Classifying the [Palmer Penguins](https://allisonhorst.github.io/palmerpenguins/) dataset. It has numeric and categorical fields, and some values are missing:
 
 ```ts
-import { ml } from "tl"
+import { ml } from 'tl'
 
 const penguins = ml.features({
-  species: ml.category(["Adelie", "Chinstrap", "Gentoo"]),
-  island: ml.category(["Biscoe", "Dream", "Torgersen"]),
+  species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
+  island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
   billLengthMm: ml.number().optional(),
   billDepthMm: ml.number().optional(),
   flipperLengthMm: ml.number().optional(),
   bodyMassG: ml.number().optional(),
-  sex: ml.category(["male", "female"]).optional(),
+  sex: ml.category(['male', 'female']).optional()
 })
 
-const data = ml.dataset(penguins, rows)                               // runtime validation
-const { train, test } = data.split({ test: 0.2, seed: 42, stratify: "species" })
+const data = ml.dataset(penguins, rows) // runtime validation
+const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
 
-const model = ml.pipeline(penguins)
-  .target("species")                                    // classification: inferred from a category
+const model = ml
+  .pipeline(penguins)
+  .target('species') // classification: inferred from a category
   .missing({
-    billLengthMm: "median",                             // required: every optional field needs a policy
-    billDepthMm: "median",
-    flipperLengthMm: "median",
-    bodyMassG: "median",
-    sex: "drop",
+    billLengthMm: 'median', // required: every optional field needs a policy
+    billDepthMm: 'median',
+    flipperLengthMm: 'median',
+    bodyMassG: 'median',
+    sex: 'drop'
   })
-  .encode(["island", "sex"], { unknown: "error" })      // required policy, no default
-  .scale(["billLengthMm", "billDepthMm", "flipperLengthMm", "bodyMassG"])
-  .estimator(ml.knn({ k: 5, distance: "euclidean" }))
+  .encode(['island', 'sex'], { unknown: 'error' }) // required policy, no default
+  .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
+  .estimator(ml.knn({ k: 5, distance: 'euclidean' }))
 
-const fitted = model.fit(train)                         // only accepts Train<F>
+const fitted = model.fit(train) // only accepts Train<F>
 fitted.evaluate(test, [ml.accuracy, ml.confusionMatrix]) // only accepts Test<F>
 
 fitted.predict({
-  island: "Biscoe",
+  island: 'Biscoe',
   billLengthMm: 47.5,
   billDepthMm: 15.0,
   flipperLengthMm: 218,
   bodyMassG: 4950,
-  sex: "male",
-}) // "Adelie" | "Chinstrap" | "Gentoo"
+  sex: 'male'
+}) // 'Adelie' | 'Chinstrap' | 'Gentoo'
 
 // @ts-expect-error — evaluating on training data is leakage
-fitted.evaluate(train, [ml.accuracy])
-
-// @ts-expect-error — mse is a regression metric; `species` is a category
+fitted.evaluate(train, [ml.accuracy]) // @ts-expect-error — mse is a regression metric; `species` is a category
 fitted.evaluate(test, [ml.mse])
 ```
 
@@ -75,21 +74,23 @@ Time-ordered data uses `ml.series` and gets temporal features and walk-forward v
 ```ts
 const priceFeatures = ml.features({
   date: ml.timestamp(),
-  ticker: ml.category(["PETR4", "VALE3", "ITUB4"]),
-  close: ml.number(),
+  ticker: ml.category(['PETR4', 'VALE3', 'ITUB4']),
+  close: ml.number()
 })
 
-const prices = ml.series(priceFeatures, rows, { time: "date", group: "ticker" })
+const prices = ml.series(priceFeatures, rows, { time: 'date', group: 'ticker' })
 
-const model = ml.pipeline(prices)
-  .target("close", { transform: "log-return", horizon: 1 })
-  .lag("close", [1, 5, 21])                     // backward-looking only
-  .missing({ warmup: "drop" })                  // required: lags leave the first rows empty
-  .estimator(ml.linearRegression({ solver: "normal-equation" }))
+const model = ml
+  .pipeline(prices)
+  .target('close', { transform: 'log-return', horizon: 1 })
+  .lag('close', [1, 5, 21]) // backward-looking only
+  .missing({ warmup: 'drop' }) // required: lags leave the first rows empty
+  .estimator(ml.linearRegression({ solver: 'normal-equation' }))
 
-const report = model.backtest(prices, ml.walkForward({ train: "expanding", test: 21, step: 21, gap: 1 }))
-
-// @ts-expect-error — a random split on a time series is leakage
+const report = model.backtest(
+  prices,
+  ml.walkForward({ train: 'expanding', test: 21, step: 21, gap: 1 })
+) // @ts-expect-error — a random split on a time series is leakage
 prices.split({ test: 0.2, seed: 42 })
 ```
 

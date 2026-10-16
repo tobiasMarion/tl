@@ -13,10 +13,8 @@ The two are distinct types, and each one exposes only the splits that make sense
 
 ```ts
 // Dataset<F>
-const { train, test } = data.split({ test: 0.2, seed: 42 })
-
-// Series<F>
-const { train, test } = series.split({ until: "2024-12-31", gap: 1 })
+const { train, test } = data.split({ test: 0.2, seed: 42 }) // Series<F>
+const { train, test } = series.split({ until: '2024-12-31', gap: 1 })
 ```
 
 Both return `Train<F>` and `Test<F>`. These are *branded* types: they have the same shape but aren't interchangeable.
@@ -33,10 +31,10 @@ A random split (`{ test, seed }`) doesn't exist on `Series<F>`. Shuffling time-o
 
 ```ts
 ml.walkForward({
-  train: "expanding",   // or { window: 504 }
+  train: 'expanding', // or { window: 504 }
   test: 21,
   step: 21,
-  gap: 1,
+  gap: 1
 })
 ```
 
@@ -67,4 +65,4 @@ With `group`, all groups share the same time cut, so no ticker sees a period tha
 - Purged and embargoed k-fold cross-validation (López de Prado).
 - Stratified split for classification.
 - A separate validation set (`train` / `validation` / `test`) for hyperparameter tuning inside each fold.
-- Time units for `window`, `step`, and `gap`: rows, or calendar periods (`"1M"`)?
+- Time units for `window`, `step`, and `gap`: rows, or calendar periods (`'1M'`)?

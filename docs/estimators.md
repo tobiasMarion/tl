@@ -17,10 +17,14 @@ These concepts are interfaces and types, not necessarily classes. The contracts 
 The same algorithm can have different implementations behind the same public API. Each implementation exposes only the options that apply to it:
 
 ```ts
-ml.linearRegression({ solver: "gradient-descent", learningRate: 0.01, epochs: 1000 })
-ml.linearRegression({ solver: "normal-equation" })
+ml.linearRegression({
+  solver: 'gradient-descent',
+  learningRate: 0.01,
+  epochs: 1000
+})
+ml.linearRegression({ solver: 'normal-equation' })
 // @ts-expect-error — learningRate doesn't apply to the closed-form solution
-ml.linearRegression({ solver: "normal-equation", learningRate: 0.01 })
+ml.linearRegression({ solver: 'normal-equation', learningRate: 0.01 })
 ```
 
 We keep four things separate:

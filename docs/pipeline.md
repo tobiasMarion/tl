@@ -3,11 +3,12 @@
 The pipeline is a guided builder: each method returns a new type, and that type exposes only the valid next steps.
 
 ```ts
-const model = ml.pipeline(features)
-  .missing({ age: "median" })
-  .encode("employment", { unknown: "error" })
-  .scale(["age", "income"])
-  .estimator(ml.linearRegression({ solver: "normal-equation" }))
+const model = ml
+  .pipeline(features)
+  .missing({ age: 'median' })
+  .encode('employment', { unknown: 'error' })
+  .scale(['age', 'income'])
+  .estimator(ml.linearRegression({ solver: 'normal-equation' }))
 
 const fitted = model.fit(train)
 ```
@@ -33,7 +34,10 @@ The pipeline carries in its type the set of fields that still lack a decision (f
 
 ```ts
 interface Pipeline<F, Pending extends keyof F> {
-  estimator<E extends Estimator>(this: Pipeline<F, never>, e: E): ConfiguredModel<F, E>
+  estimator<E extends Estimator>(
+    this: Pipeline<F, never>,
+    e: E
+  ): ConfiguredModel<F, E>
 }
 ```
 

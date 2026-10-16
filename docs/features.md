@@ -6,15 +6,15 @@ The DSL defines the data schema using only the library. Users don't need to impo
 const features = ml.features({
   age: ml.number().optional(),
   income: ml.number(),
-  employment: ml.category(["employed", "unemployed", "self-employed"]),
-  ownsHome: ml.boolean(),
+  employment: ml.category(['employed', 'unemployed', 'self-employed']),
+  ownsHome: ml.boolean()
 })
 
 type Features = typeof features.infer
 // {
 //   age?: number
 //   income: number
-//   employment: "employed" | "unemployed" | "self-employed"
+//   employment: 'employed' | 'unemployed' | 'self-employed'
 //   ownsHome: boolean
 // }
 ```
@@ -23,7 +23,7 @@ type Features = typeof features.infer
 
 - Infer the record type from the schema.
 - Represent categories as literal unions.
-- Reject at compile time values of the wrong type (`age: "28"`) and categories that weren't declared.
+- Reject at compile time values of the wrong type (`age: '28'`) and categories that weren't declared.
 - Validate external data at runtime, with messages that point to the field and the problem.
 - Mark optional or nullable fields in the type, so the pipeline [requires a policy](preprocessing.md#missing-values) for them.
 - Only `timestamp` fields can be used as the `time` key of a [series](dataset.md#dataset-and-series), and only `category` fields as its `group`.

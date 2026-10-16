@@ -1,5 +1,6 @@
-// Standard Schema V1 interface, copied from https://standardschema.dev as the
-// spec recommends, so the library has no runtime or type dependency on it.
+// Standard Schema V1 and Standard JSON Schema V1 interfaces, copied from
+// https://standardschema.dev as the spec recommends, so the library has no
+// runtime or type dependency on it.
 
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
   readonly '~standard': StandardSchemaV1.Props<Input, Output>
@@ -47,4 +48,18 @@ export declare namespace StandardSchemaV1 {
   export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<
     Schema['~standard']['types']
   >['output']
+}
+
+export declare namespace StandardJSONSchemaV1 {
+  export type Target = 'draft-2020-12' | 'draft-07' | 'openapi-3.0'
+
+  export interface Options {
+    readonly target: Target
+    readonly libraryOptions?: Record<string, unknown> | undefined
+  }
+
+  export interface Converter {
+    readonly input: (options: Options) => Record<string, unknown>
+    readonly output: (options: Options) => Record<string, unknown>
+  }
 }

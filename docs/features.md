@@ -28,7 +28,7 @@ penguins.parseRows(rows) // many records, issues grouped by field
 - Represent categories as literal unions.
 - Reject at compile time values of the wrong type (`age: '28'`) and categories that weren't declared.
 - Validate external data at runtime, with messages that point to the field and the problem.
-- Mark optional or nullable fields in the type, so the pipeline [requires a policy](preprocessing.md#missing-values) for them.
+- Mark optional fields in the type, so the pipeline [requires a policy](preprocessing.md#missing-values) for them.
 - Only `timestamp` fields can be used as the `time` key of a [series](dataset.md#dataset-and-series), and only `category` fields as its `group`.
 
 ## Field types
@@ -42,8 +42,6 @@ penguins.parseRows(rows) // many records, issues grouped by field
 | `.optional()`      | `T \| undefined`   | done   |
 
 `ml.category([…])` needs at least one category and rejects duplicates, both at compile time and at runtime. Its declaration order is kept: it is the column order the encoder produces.
-
-Optional fields become optional keys that also accept `undefined` (`age?: number | undefined`), because the project uses `exactOptionalPropertyTypes`.
 
 ## Runtime validation
 
@@ -79,11 +77,43 @@ Errors are thrown as `FeatureValidationError`, whose `issues` hold the field, co
 | Direction | Mechanism | Status |
 |-----------|-----------|--------|
 | TL → ecosystem | Features implement `~standard` (Standard Schema V1), so tools that accept Zod/Valibot/ArkType through Standard Schema accept them too | done |
-| Zod → TL | `ml.fromSchema(schema)` reads the types from `StandardSchemaV1.InferOutput` and the categories and required fields from Standard JSON Schema (`~standard.jsonSchema`) | planned |
+| Zod → TL | `ml.fromSchema(schema)` reads the types from `StandardSchemaV1.InferOutput` and the categories and required fields from Standard JSON Schema (`~standard.jsonSchema`) | done |
 
-The Standard Schema interface is copied into `src/standard-schema.ts`, as the spec recommends, so there is no dependency on `@standard-schema/spec`.
+```ts
+const Penguin = z.object({
+  species: z.enum(['Adelie', 'Chinstrap', 'Gentoo']),
+  billLengthMm: z.number().optional(),
+  notes: z.string(),
+  observedAt: z.date()
+})
+
+const penguins = ml.fromSchema(Penguin, {
+  notes: ml.category(['calm', 'agitated']), // required: z.string() has no categories
+  observedAt: ml.timestamp() // required: JSON Schema can't represent dates
+})
+```
+
+**Mapping rules:**
+
+| Zod | TL |
+|-----|----|
+| `z.number()`, `z.number().int()` | `ml.number()` |
+| `z.boolean()` | `ml.boolean()` |
+| `z.enum([...])`, `z.literal('x')` | `ml.category([...])`, in the same order |
+| `.optional()`, `.nullable()` | `.optional()` |
+| anything else (`z.string()`, `z.date()`, …) | needs an override |
+
+Fields that can't be mapped make the override **required at compile time**: leaving one out is a type error that names the missing field. An override can also replace a mapped field, for example to change the category order.
+
+The Standard Schema interfaces are copied into `src/standard-schema.ts`, as the spec recommends, so there is no dependency on `@standard-schema/spec`. Zod is a `devDependency` used only in compatibility tests.
+
+**Known limits:**
+
+- A TL schema is not a Zod schema: it works where Standard Schema is accepted, but not inside `z.object({...})`.
+- JSON Schema can't represent `z.date()`, and `z.iso.datetime()` validates strings, not `Date` values. Dates always need an `ml.timestamp()` override, and the data must hold `Date` instances.
+- Zod's published types declare `~standard` without `jsonSchema`, even though it exists at runtime, so `fromSchema` checks for it at runtime and explains what is missing.
 
 ## Open questions
 
-- Distinguish `optional` from `nullable`, or treat them the same way.
-- Define the `target` in the schema or separately.
+- Distinguish `optional` from `nullable`. Today `null` is accepted at runtime as missing, but the type only says `| undefined`.
+- Define the `target` in the schema or in the pipeline (the README examples use the pipeline).

@@ -10,6 +10,12 @@ export {
   type TimestampField,
   timestamp
 } from './fields.ts'
+export {
+  type FromSchemaShape,
+  fromSchema,
+  type Overrides,
+  type UnmappableKeys
+} from './from-schema.ts'
 export type {
   FieldValue,
   InferShape,

@@ -100,7 +100,7 @@ prices.split({ test: 0.2, seed: 42 })
 
 | #  | Milestone                       | Deliverables |
 |----|---------------------------------|--------------|
-| M1 | **Feature DSL**                 | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests |
+| M1 | **Feature DSL**                 | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests, Standard Schema support and `ml.fromSchema` for Zod/Valibot/ArkType schemas |
 | M2 | **Dataset, split, and validation** | `dataset` and `series`; random and chronological split; walk-forward (expanding/rolling window, gap); branded `Train`/`Test` |
 | M3 | **Preprocessing**               | Imputation, one-hot encoding, standardization, lag and rolling features, target horizon; learned state kept separate from configuration |
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
@@ -129,7 +129,7 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 .
 ├── src/
 │   ├── index.ts              # public `ml` namespace
-│   ├── standard-schema.ts    # Standard Schema V1 interface (copied from the spec)
+│   ├── standard-schema.ts    # Standard Schema interfaces (copied from the spec)
 │   ├── features/             # schema DSL, inference, runtime validation
 │   ├── dataset/              # dataset, series, Train/Test types
 │   ├── validation/           # split, walk-forward, backtest folds

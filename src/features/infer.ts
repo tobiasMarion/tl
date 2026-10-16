@@ -21,7 +21,7 @@ export type OptionalKeys<S extends Shape> = {
 
 export type RequiredKeys<S extends Shape> = Exclude<keyof S, OptionalKeys<S>>
 
-type Simplify<T> = { [K in keyof T]: T[K] } & {}
+export type Simplify<T> = { [K in keyof T]: T[K] } & {}
 
 export type InferShape<S extends Shape> = Simplify<
   { [K in RequiredKeys<S>]: FieldValue<S[K]> } & {

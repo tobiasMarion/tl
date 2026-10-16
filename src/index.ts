@@ -2,12 +2,14 @@ import {
   boolean,
   category,
   features,
+  fromSchema,
   number,
   timestamp
 } from './features/index.ts'
 
 export const ml = Object.freeze({
   features,
+  fromSchema,
   number,
   boolean,
   category,

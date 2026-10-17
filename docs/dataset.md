@@ -76,7 +76,7 @@ const { train, validation, test } = prices.split({
 - **`testFrom`, `validationFrom`:** rows at or after `testFrom` are test; rows from `validationFrom` until `testFrom` are validation; earlier rows are train. They accept the same inputs as `ml.timestamp()` (a `Date`, milliseconds, or an ISO 8601 string read as UTC without an offset), and a cut can fall between two times of the series.
 - **`gap`:** rows dropped before each held-out block, so no training label reaches into it. A target that looks 5 steps ahead (`'will the price go up in the next 5 days?'`) needs at least 5: the label of the last training row would otherwise be computed from held-out prices. The unit is part of the value, with no default:
   - `{ steps: n }` drops the last `n` distinct times before the cut. For targets defined in observations, such as trading days, where weekends don't count.
-  - `{ duration: ms }` drops every row less than `ms` before the cut. For targets defined in calendar time, or for irregular series where `n` rows can be minutes or days.
+  - A duration in one unit, `{ weeks }`, `{ days }`, `{ hours }`, `{ minutes }`, `{ seconds }` or `{ milliseconds }` (the names of `Temporal.Duration`), drops every row less than that before the cut. For targets defined in calendar time, or for irregular series where `n` rows can be minutes or days. A day is always 24 hours, since timestamps are UTC instants. `{ days: 1, hours: 12 }` is written `{ hours: 36 }`. Months and years have no fixed length and aren't accepted.
   - `{ steps: 0 }` means no gap, and has to be written down.
 - The gap applies before every cut and to every earlier row. With a `group`, steps count distinct times across the whole series, so every series loses the same times and they all share the same cut.
 - A block left empty, a `validationFrom` that isn't before `testFrom`, or an invalid `testFrom` or `gap` throws at the call, with the series' time span in the message.
@@ -160,7 +160,7 @@ M2 provides the composable splits and their type rules. The search API that runs
 
 - Split strategy and its parameters. There is no default `test` or `validation` size, no default `k`, and no default window.
 - `seed` for random splits and k-fold.
-- `gap` for temporal splits, with its unit (`{ steps }` or `{ duration }`). `{ steps: 0 }` is allowed, but it has to be written down explicitly.
+- `gap` for temporal splits, with its unit (`{ steps: 5 }`, `{ days: 5 }`, ...). `{ steps: 0 }` is allowed, but it has to be written down explicitly.
 
 ## After the MVP
 
@@ -171,4 +171,4 @@ M2 provides the composable splits and their type rules. The search API that runs
 
 - Whether `Test<F>` gets its own final-evaluation API instead of sharing `evaluate` with `Validation<F>`, to make "evaluate on test once, at the end" explicit.
 - Whether `stratify` should be a required decision for classification targets.
-- Time units for walk-forward `window`, `step`, and `test`: the chronological split settles `gap` as `{ steps }` or `{ duration }`, and walk-forward should follow it. Calendar periods with variable length (`'1M'`) are still open.
+- Time units for walk-forward `window`, `step`, and `test`: the chronological split settles `gap` as one unit, `{ steps: n }` or a fixed-length duration such as `{ days: n }`, and walk-forward should follow it. Calendar periods with variable length (`'1M'`) are still open.

@@ -46,17 +46,27 @@ describe('series.split', () => {
 
   test('drops a duration before the test block', () => {
     // [Jan 6, Jan 8) is dropped
-    const twoDays = daily.split({
-      testFrom: date(8),
-      gap: { duration: 2 * DAY }
-    })
+    const twoDays = daily.split({ testFrom: date(8), gap: { days: 2 } })
     assert.deepEqual(closes(twoDays.train), range(1, 5))
     // [Jan 6 12:00, Jan 8) is dropped, so Jan 6 stays
-    const dayAndHalf = daily.split({
-      testFrom: date(8),
-      gap: { duration: 1.5 * DAY }
-    })
+    const dayAndHalf = daily.split({ testFrom: date(8), gap: { hours: 36 } })
     assert.deepEqual(closes(dayAndHalf.train), range(1, 6))
+  })
+
+  test('gives each unit its fixed length', () => {
+    // Each gap is just over two days before Jan 8, so it starts late on
+    // Jan 5: Jan 6 and Jan 7 are dropped
+    for (const gap of [
+      { weeks: 2 / 7 + 1e-6 },
+      { days: 2.001 },
+      { hours: 49 },
+      { minutes: 2 * 24 * 60 + 1 },
+      { seconds: (2 * DAY) / 1000 + 1 },
+      { milliseconds: 2 * DAY + 1 }
+    ]) {
+      const { train } = daily.split({ testFrom: date(8), gap })
+      assert.deepEqual(closes(train), range(1, 5))
+    }
   })
 
   test('cuts a validation block with a gap before each held-out block', () => {
@@ -153,24 +163,52 @@ describe('series.split options', () => {
     )
   })
 
-  test('rejects a gap that is not { steps } or { duration }', () => {
-    for (const gap of [
-      1,
-      undefined,
-      {},
-      { steps: -1 },
-      { steps: 1.5 },
-      { duration: -1 },
-      { duration: Number.POSITIVE_INFINITY },
-      { steps: 1, duration: 1 },
-      { step: 1 }
-    ]) {
-      assert.throws(() => daily.split({ testFrom: date(8), gap } as never), {
-        name: 'TypeError',
-        message:
-          /^series\.split\(\): gap must be \{ steps: n \} with a whole number n >= 0, or \{ duration: ms \} with ms >= 0, such as \{ steps: 1 \}, received /
-      })
+  test('rejects a gap that is not one unit', () => {
+    const gapRejects = (gap: unknown, message: string) =>
+      rejects({ testFrom: date(8), gap }, 'TypeError', message)
+    const shapes =
+      'series.split(): gap takes one unit: { steps: n } or a duration such as { days: 5 } (weeks, days, hours, minutes, seconds, milliseconds)'
+    gapRejects(1, `${shapes}, received 1`)
+    gapRejects(undefined, `${shapes}, received undefined`)
+    gapRejects({}, `${shapes}, received {}`)
+    gapRejects({ step: 1 }, `${shapes}, received {"step":1}`)
+    gapRejects(
+      { days: 1, hours: 12 },
+      `${shapes}, received {"days":1,"hours":12}`
+    )
+    gapRejects(
+      { steps: 1, days: 1 },
+      `${shapes}, received {"steps":1,"days":1}`
+    )
+    for (const steps of [-1, 1.5]) {
+      gapRejects(
+        { steps },
+        `series.split(): gap steps must be a whole number >= 0, received {"steps":${steps}}`
+      )
     }
+    gapRejects(
+      { days: -1 },
+      'series.split(): gap days must be a number >= 0, received {"days":-1}'
+    )
+  })
+
+  test('rejects months and years, which have no fixed length', () => {
+    for (const gap of [{ months: 1 }, { years: 1 }]) {
+      rejects(
+        { testFrom: date(8), gap },
+        'TypeError',
+        `series.split(): gap can't use months or years, which have no fixed length; use days or weeks, received ${JSON.stringify(gap)}`
+      )
+    }
+  })
+
+  test('names the gap in messages', () => {
+    rejects(
+      // [Dec 31 12:00, Jan 3) covers Jan 1 and Jan 2
+      { testFrom: date(3), gap: { hours: 60 } },
+      'RangeError',
+      'series.split(): no rows left for training before 2025-01-03T00:00:00.000Z after a gap of 60 hours; the series runs from 2025-01-01T00:00:00.000Z to 2025-01-10T00:00:00.000Z'
+    )
   })
 
   test('rejects a validationFrom that is not before testFrom', () => {

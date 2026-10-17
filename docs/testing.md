@@ -32,7 +32,7 @@ Some important negative cases:
 - an implementation option that doesn't apply to the chosen solver;
 - a metric that doesn't match the problem type;
 - a random split or k-fold on a `Series<F>`;
-- splitting a `Test<F>` again;
+- calling `split` on a block (`Train<F>`, `Validation<F>`, or `Test<F>`);
 - `stratify` on a field that isn't a category;
 - `lag`/`rolling` on a non-temporal `Dataset<F>`;
 - a walk-forward `gap` smaller than the target `horizon`.

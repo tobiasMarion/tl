@@ -28,7 +28,7 @@ type _fieldValue = Expect<
   [
     Equal<FieldValue<S['billLengthMm']>, number>,
     Equal<FieldValue<S['isAdult']>, boolean>,
-    Equal<FieldValue<S['observedAt']>, Date>,
+    Equal<FieldValue<S['observedAt']>, number>,
     Equal<FieldValue<S['species']>, 'Adelie' | 'Chinstrap' | 'Gentoo'>
   ] extends [true, true, true, true]
     ? true
@@ -53,7 +53,7 @@ type _inferShape = Expect<
     {
       species: 'Adelie' | 'Chinstrap' | 'Gentoo'
       isAdult: boolean
-      observedAt: Date
+      observedAt: number
       billLengthMm?: number | undefined
       sex?: 'male' | 'female' | undefined
       condition?: 'poor' | 'fair' | 'good' | undefined
@@ -66,7 +66,7 @@ type Penguin = InferShape<S>
 export const minimal: Penguin = {
   species: 'Gentoo',
   isAdult: true,
-  observedAt: new Date()
+  observedAt: 1194652800000
 }
 
 export const wrongType: Penguin = {
@@ -84,5 +84,11 @@ export const unknownCategory: Penguin = {
 // @ts-expect-error — species is required
 export const missingRequired: Penguin = {
   isAdult: true,
+  observedAt: 1194652800000
+}
+
+export const dateTimestamp: Penguin = {
+  ...minimal,
+  // @ts-expect-error — timestamps are milliseconds since 1970, not Date objects
   observedAt: new Date()
 }

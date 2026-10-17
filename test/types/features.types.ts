@@ -17,7 +17,7 @@ type _infersRecord = Expect<
     {
       species: 'Adelie' | 'Chinstrap' | 'Gentoo'
       isAdult: boolean
-      observedAt: Date
+      observedAt: number
       billLengthMm?: number | undefined
       sex?: 'male' | 'female' | undefined
     }
@@ -51,13 +51,13 @@ type _parseReturnsRecord = Expect<
 export const valid: Penguin = {
   species: 'Gentoo',
   isAdult: true,
-  observedAt: new Date()
+  observedAt: 1194652800000
 }
 
 export const wrongType: Penguin = {
   species: 'Gentoo',
   isAdult: true,
-  observedAt: new Date(),
+  observedAt: 1194652800000,
   // @ts-expect-error — billLengthMm is a number
   billLengthMm: '28'
 }
@@ -66,13 +66,13 @@ export const unknownCategory: Penguin = {
   // @ts-expect-error — 'Emperor' is not a declared category
   species: 'Emperor',
   isAdult: true,
-  observedAt: new Date()
+  observedAt: 1194652800000
 }
 
 // @ts-expect-error — species is required
 export const missingRequired: Penguin = {
   isAdult: true,
-  observedAt: new Date()
+  observedAt: 1194652800000
 }
 
 // @ts-expect-error — at least one category is required

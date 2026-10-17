@@ -15,7 +15,7 @@ type Penguin = typeof penguins.infer // or Infer<typeof penguins>
 //   species: 'Adelie' | 'Chinstrap' | 'Gentoo'
 //   billLengthMm?: number | undefined
 //   isAdult: boolean
-//   observedAt: Date
+//   observedAt: number // milliseconds since 1970, UTC
 // }
 
 penguins.parse(record) // one record
@@ -41,7 +41,7 @@ Training data doesn't need `parseRows`: `ml.dataset` validates its rows. `parse`
 | `ml.boolean()`     | `boolean`          | done   |
 | `ml.category([…])` | literal union      | done   |
 | `ml.orderedCategory([…])` | literal union, ranked in list order | done |
-| `ml.timestamp()`   | `Date`             | done   |
+| `ml.timestamp()`   | `number`, milliseconds since 1970 (UTC) | done   |
 | `.optional()`      | `T \| undefined`   | done   |
 
 `ml.category([…])` needs at least one category and rejects duplicates, both at compile time and at runtime. Its declaration order is kept: it is the column order the encoder produces.
@@ -77,9 +77,10 @@ See `examples/diamonds`, where `cut`, `color` and `clarity` are graded scales (`
 
 - **Missing values:** `undefined`, `null`, and `NaN` count as missing. An optional field turns them into `undefined`; a required field reports them.
 - **Numbers** must be finite. `Infinity` is rejected.
-- **Timestamps** must be valid `Date` instances.
+- **Timestamps** accept a valid `Date`, a number of milliseconds since 1970-01-01T00:00:00Z, or an ISO 8601 string (`'2025-01-31'`, `'2025-01-31T10:00:00-03:00'`, with `T` or a space before the time). They come out as milliseconds, the unit of `Date.getTime()`: a number can't be changed through a shared reference, compares with `<`, and is what the algorithms use. Dates that don't exist, such as `'2025-02-30'`, are rejected instead of rolled over.
+- **Time zone:** an ISO string without an offset (`'2025-01-31T10:00'`) is read as **UTC**, so the same data gives the same timestamps on every machine. If the data was recorded in local time, every row is shifted by the same offset, which keeps the order and the intervals between rows. Add the offset (`-03:00`) to keep the real instant.
 - **Undeclared fields** are dropped from the output, so a CSV can carry extra columns such as an id.
-- **No coercion:** `'39.1'` is not a number. Parsing strings from CSV is part of loading data (see [Dataset](dataset.md)).
+- **No coercion:** `'39.1'` is not a number. Parsing strings from CSV is part of loading data (see [Dataset](dataset.md)). Timestamps are the exception: dates have no JSON literal, so ISO 8601 strings are an accepted way to write them.
 
 `parseRows` groups issues by field and problem, so 100k rows with one bad column produce one message, not 100k:
 
@@ -142,7 +143,7 @@ The Standard Schema interfaces are copied into `src/standard-schema.ts`, as the 
 **Known limits:**
 
 - A TL schema is not a Zod schema: it works where Standard Schema is accepted, but not inside `z.object({...})`.
-- JSON Schema can't represent `z.date()`, and `z.iso.datetime()` validates strings, not `Date` values. Dates always need an `ml.timestamp()` override, and the data must hold `Date` instances.
+- JSON Schema can't represent `z.date()`, and `z.iso.datetime()` validates strings. Dates always need an `ml.timestamp()` override; the data can hold `Date` instances, milliseconds, or ISO strings, and comes out as milliseconds.
 - Zod's published types declare `~standard` without `jsonSchema`, even though it exists at runtime, so `fromSchema` checks for it at runtime and explains what is missing.
 
 ## Open questions

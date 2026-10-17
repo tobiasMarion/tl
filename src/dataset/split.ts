@@ -18,10 +18,9 @@ export type CategoryKeys<S extends Shape> = {
 }[keyof S] &
   string
 
-// The options are generic in the stratify keys, not in the whole schema, and
-// are type aliases of object literals instead of interfaces. Both keep editor
-// hovers short: a generic interface prints its owner with the argument
-// expanded (RandomSplitOptions<{ readonly species: CategoryField<...>; ... }>).
+// The options are generic in the stratify keys, not in the whole schema, so
+// hovers show RandomSplitOptions<"island" | "species">. The types in this file
+// are type aliases, not interfaces: see Type quality in docs/principles.md.
 export type RandomSplitOptions<K extends string> = {
   /** Fraction of the rows that goes to the test block, in (0, 1). */
   readonly test: number
@@ -40,12 +39,12 @@ export type RandomSplitWithValidationOptions<K extends string> =
     readonly validation: number
   }
 
-export interface TrainTest<S extends Shape> {
+export type TrainTest<S extends Shape> = {
   readonly train: Train<S>
   readonly test: Test<S>
 }
 
-export interface TrainValidationTest<S extends Shape> extends TrainTest<S> {
+export type TrainValidationTest<S extends Shape> = TrainTest<S> & {
   readonly validation: Validation<S>
 }
 

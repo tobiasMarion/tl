@@ -43,6 +43,8 @@ The internal representation doesn't dictate the public interface.
 
 - No `any` and no broad casts that just silence incompatibilities.
 - Targeted casts are acceptable at runtime boundaries, as long as a validation or invariant justifies them.
+- Types that are generic in the schema (`Features<S>`, `Dataset<S>`, `Train<S>`, ...) are type aliases of object literals, not interfaces. An editor hover on a property of a generic interface prints the owner with the whole schema expanded (`Features<{ readonly species: CategoryField<...>; ... }>.fields`); a property of an object literal prints only its own type (`fields: ...`).
+- Messages name the valid choices: a wrong value should report `'"island" | "species"'`, not an alias of the whole schema. Named aliases are kept out of public signatures when TypeScript would print them instead of their result.
 - Type tests run in CI (see [Testing](testing.md)).
 
 ## Scope control

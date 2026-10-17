@@ -42,6 +42,60 @@ const block = <S extends Shape>(
     rows: Object.freeze(indices.map(i => rows[i] as InferShape<S>))
   })
 
+const MAX_SEED = 0xffffffff
+
+// Quotes strings, so a JavaScript caller passing '0.2' sees why it was rejected.
+const show = (value: unknown) =>
+  typeof value === 'string' ? `'${value}'` : String(value)
+
+// The typeof check matters: '0.2' > 0 is true, because comparisons coerce
+// strings to numbers. The negated comparison also rejects NaN.
+const checkFraction = (name: string, value: number) => {
+  if (typeof value !== 'number' || !(value > 0 && value < 1)) {
+    throw new RangeError(
+      `dataset.split(): ${name} must be a fraction between 0 and 1, such as 0.2, received ${show(value)}`
+    )
+  }
+}
+
+// Validates the options at the entry point, so randomSplit can trust them. The
+// seed has to be a uint32: seededRandom keeps only 32 bits, so any other number
+// would silently become a different seed.
+const checkOptions = (
+  n: number,
+  options: RandomSplitOptions & { readonly validation?: number }
+) => {
+  if (n === 0) throw new RangeError('dataset.split(): the dataset has no rows')
+
+  checkFraction('test', options.test)
+  if (options.validation !== undefined) {
+    checkFraction('validation', options.validation)
+    if (options.test + options.validation >= 1) {
+      throw new RangeError(
+        `dataset.split(): test + validation must be less than 1 to leave rows for training, received ${options.test} + ${options.validation}`
+      )
+    }
+  }
+
+  const { seed } = options
+  if (!(Number.isInteger(seed) && seed >= 0 && seed <= MAX_SEED)) {
+    throw new RangeError(
+      `dataset.split(): seed must be an integer from 0 to ${MAX_SEED}, such as 42, received ${show(seed)}`
+    )
+  }
+
+  // Held-out blocks round up, so a small dataset can run out of training rows
+  // even when the fractions add up to less than 1.
+  const heldOut =
+    blockSize(n, options.test) +
+    (options.validation === undefined ? 0 : blockSize(n, options.validation))
+  if (heldOut >= n) {
+    throw new RangeError(
+      `dataset.split(): ${n} rows leave no rows for training after holding out ${heldOut}. Use smaller fractions or more rows`
+    )
+  }
+}
+
 // The permutation is cut as [test | validation | train]. Test comes first, so
 // asking for a validation block with the same seed and test fraction keeps the
 // same test block: validation is taken from what would have been training data.
@@ -51,6 +105,7 @@ export const randomSplit = <S extends Shape>(
   rows: readonly InferShape<S>[],
   options: RandomSplitOptions & { readonly validation?: number }
 ): TrainTest<S> | TrainValidationTest<S> => {
+  checkOptions(rows.length, options)
   const indices = shuffledIndices(rows.length, options.seed)
   const testEnd = blockSize(rows.length, options.test)
   const test = block(rows, indices.slice(0, testEnd)) as Test<S>

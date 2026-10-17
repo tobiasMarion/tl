@@ -113,3 +113,77 @@ describe('dataset.split', () => {
     assert.ok(Object.isFrozen(validation.rows))
   })
 })
+
+describe('dataset.split options', () => {
+  const rejects = (options: object, message: string) =>
+    assert.throws(() => data.split(options as never), {
+      name: 'RangeError',
+      message
+    })
+
+  test('rejects a test fraction outside (0, 1)', () => {
+    for (const value of [0, 1, -0.1, 1.5, Number.NaN]) {
+      rejects(
+        { test: value, seed: 42 },
+        `dataset.split(): test must be a fraction between 0 and 1, such as 0.2, received ${value}`
+      )
+    }
+  })
+
+  test('rejects a test fraction that is not a number', () => {
+    rejects(
+      { test: '0.2', seed: 42 },
+      "dataset.split(): test must be a fraction between 0 and 1, such as 0.2, received '0.2'"
+    )
+  })
+
+  test('rejects a validation fraction outside (0, 1)', () => {
+    rejects(
+      { validation: 0, test: 0.2, seed: 42 },
+      'dataset.split(): validation must be a fraction between 0 and 1, such as 0.2, received 0'
+    )
+  })
+
+  test('rejects fractions that leave no room for training', () => {
+    rejects(
+      { validation: 0.5, test: 0.5, seed: 42 },
+      'dataset.split(): test + validation must be less than 1 to leave rows for training, received 0.5 + 0.5'
+    )
+  })
+
+  test('rejects a seed that is not a uint32', () => {
+    for (const seed of [-1, 1.5, 2 ** 32, Number.NaN]) {
+      rejects(
+        { test: 0.2, seed },
+        `dataset.split(): seed must be an integer from 0 to 4294967295, such as 42, received ${seed}`
+      )
+    }
+  })
+
+  test('accepts the seed bounds', () => {
+    data.split({ test: 0.2, seed: 0 })
+    data.split({ test: 0.2, seed: 4294967295 })
+  })
+
+  test('rejects a split that rounds the training block away', () => {
+    // 0.6 of 2 rows rounds up to 2
+    const pair = ml.dataset(points, [{ id: 0 }, { id: 1 }])
+    assert.throws(() => pair.split({ test: 0.6, seed: 42 }), {
+      name: 'RangeError',
+      message:
+        'dataset.split(): 2 rows leave no rows for training after holding out 2. Use smaller fractions or more rows'
+    })
+    // 0.3 + 0.3 of 3 rows rounds up to 1 + 1, leaving 1
+    const three = ml.dataset(points, [{ id: 0 }, { id: 1 }, { id: 2 }])
+    const { train } = three.split({ validation: 0.3, test: 0.3, seed: 42 })
+    assert.equal(train.rows.length, 1)
+  })
+
+  test('rejects an empty dataset', () => {
+    const empty = ml.dataset(points, [])
+    assert.throws(() => empty.split({ test: 0.2, seed: 42 }), {
+      name: 'RangeError',
+      message: 'dataset.split(): the dataset has no rows'
+    })
+  })
+})

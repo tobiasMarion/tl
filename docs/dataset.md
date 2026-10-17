@@ -52,6 +52,7 @@ const { train, validation, test } = data.split({
 - The returned blocks follow the options: `validation` only exists when it was asked for.
 - `test` and `validation` are fractions of the whole dataset, rounded up; `train` gets the rest.
 - The test block is cut first. With the same `seed` and `test`, adding or changing `validation` keeps the same test block, so validation choices can be compared against a fixed test set.
+- The options are checked at the call: fractions must be in (0, 1) and leave rows for training after rounding, and `seed` must be an integer from 0 to 2³²−1. Anything else throws a `RangeError`.
 
 A random split doesn't exist on `Series<F>`. Shuffling time-ordered data leaks the future into training.
 

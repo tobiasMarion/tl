@@ -123,10 +123,19 @@ After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural 
 | [Metrics](docs/metrics.md) | Regression, classification, and directional metrics |
 | [Testing](docs/testing.md) | Numerical tests, reference oracles, type tests |
 
+## Development
+
+```sh
+npm run check   # lint, typecheck, and tests
+```
+
+Changes reach `main` only through pull requests. CI runs `check`, the build, and the examples on every pull request, and the PR title follows [Conventional Commits](https://www.conventionalcommits.org), since it becomes the merge commit title. Dependabot opens weekly update PRs for npm and GitHub Actions.
+
 ## Folder structure
 
 ```
 .
+├── .github/                  # CI, PR title check, Dependabot
 ├── src/
 │   ├── index.ts              # public `ml` namespace
 │   ├── standard-schema.ts    # Standard Schema interfaces (copied from the spec)

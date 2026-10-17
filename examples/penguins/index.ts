@@ -31,7 +31,9 @@ console.log(`${records.length} valid penguins`)
 
 // ── M2: Dataset and split ────────────────────────────────────────────────────
 
-// const data = ml.dataset(penguins, rows)
+const data = ml.dataset(penguins, rows)
+console.log(`dataset with ${data.rows.length} rows`)
+
 // const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────

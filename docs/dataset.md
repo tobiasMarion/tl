@@ -5,7 +5,7 @@
 - `ml.dataset(features, rows)`: rows have no meaningful order.
 - `ml.series(features, rows, { time, group? })`: rows are ordered by `time`. `group` identifies independent series in panel data (for example, one series per ticker).
 
-Both validate the records against the schema at runtime, once, at the entry point. `series` also checks that timestamps are valid and that there are no duplicates within a group.
+Both validate the records against the schema at runtime, once, at the entry point. The dataset, its rows, and each record are frozen; the caller's rows are left untouched. `series` also checks that timestamps are valid and that there are no duplicates within a group.
 
 The two are distinct types, and each one exposes only the splits that make sense for it.
 

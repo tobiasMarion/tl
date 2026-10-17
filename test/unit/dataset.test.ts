@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { dataset } from '../../src/dataset/dataset.ts'
 import { FeatureValidationError, ml } from '../../src/index.ts'
 
 const penguins = ml.features({
@@ -15,7 +14,7 @@ const rows = [
 
 describe('dataset', () => {
   test('keeps the schema and the parsed records', () => {
-    const data = dataset(penguins, rows)
+    const data = ml.dataset(penguins, rows)
     assert.strictEqual(data.features, penguins)
     // Parsed, not copied: a missing value comes out as undefined
     assert.deepEqual(data.rows, [
@@ -26,14 +25,14 @@ describe('dataset', () => {
 
   test('rejects invalid rows', () => {
     assert.throws(
-      () => dataset(penguins, [{ species: 'Emperor' }]),
+      () => ml.dataset(penguins, [{ species: 'Emperor' }]),
       FeatureValidationError
     )
   })
 
   test('starts the error stack at the dataset call', () => {
     try {
-      dataset(penguins, [{ species: 'Emperor' }])
+      ml.dataset(penguins, [{ species: 'Emperor' }])
     } catch (error) {
       assert.ok(error instanceof FeatureValidationError)
       const frame = error.stack?.split('\n').find(line => /^\s+at /.test(line))
@@ -44,7 +43,7 @@ describe('dataset', () => {
   })
 
   test('freezes the dataset, its rows and each record', () => {
-    const data = dataset(penguins, rows)
+    const data = ml.dataset(penguins, rows)
     assert.ok(Object.isFrozen(data))
     assert.ok(Object.isFrozen(data.rows))
     assert.ok(Object.isFrozen(data.rows[0]))
@@ -52,7 +51,7 @@ describe('dataset', () => {
 
   test("leaves the caller's rows untouched", () => {
     const input = [{ species: 'Adelie', billLengthMm: 39.1 }]
-    dataset(penguins, input)
+    ml.dataset(penguins, input)
     assert.ok(!Object.isFrozen(input))
     assert.ok(!Object.isFrozen(input[0]))
   })

@@ -48,11 +48,11 @@ const { train, validation, test } = data.split({
 })
 ```
 
-- **`stratify`:** `{ ..., stratify: 'species' }` keeps the proportion of each category in every block. Only `category` and `orderedCategory` fields are accepted. With imbalanced classes, a split without it can leave a class almost absent from the test set.
+- **`stratify`:** `{ ..., stratify: 'species' }` keeps the proportion of each category in every block. Only required `category` and `orderedCategory` fields are accepted: an optional one would need a decision about missing values. With imbalanced classes, a split without it can leave a class almost absent from the test set. Blocks keep the sizes they would have without `stratify`; each class gets its share of a block by the largest remainder method, so rounding per class doesn't make the block larger than asked for.
 - The returned blocks follow the options: `validation` only exists when it was asked for.
 - `test` and `validation` are fractions of the whole dataset, rounded up; `train` gets the rest.
 - The test block is cut first. With the same `seed` and `test`, adding or changing `validation` keeps the same test block, so validation choices can be compared against a fixed test set.
-- The options are checked at the call: fractions must be in (0, 1) and leave rows for training after rounding, and `seed` must be an integer from 0 to 2³²−1. Anything else throws a `RangeError`.
+- The options are checked at the call: fractions must be in (0, 1) and leave rows for training after rounding, and `seed` must be an integer from 0 to 2³²−1. Anything else throws a `RangeError`. With `stratify`, the field must be a required category (a `TypeError` lists the valid ones), and each class needs at least one row per block (a `RangeError` names the class).
 
 A random split doesn't exist on `Series<F>`. Shuffling time-ordered data leaks the future into training.
 

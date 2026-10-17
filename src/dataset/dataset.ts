@@ -1,10 +1,24 @@
 import type { Features } from '../features/features.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { FeatureValidationError, validateRows } from '../features/validate.ts'
+import {
+  type RandomSplitOptions,
+  type RandomSplitWithValidationOptions,
+  randomSplit,
+  type TrainTest,
+  type TrainValidationTest
+} from './split.ts'
 
 export interface Dataset<S extends Shape> {
   readonly features: Features<S>
   readonly rows: readonly InferShape<S>[]
+  /**
+   * Shuffles the rows with `seed` and holds out a `validation` and a `test`
+   * fraction.
+   */
+  split(options: RandomSplitWithValidationOptions): TrainValidationTest<S>
+  /** Shuffles the rows with `seed` and holds out a `test` fraction. */
+  split(options: RandomSplitOptions): TrainTest<S>
 }
 
 export const dataset = <S extends Shape>(
@@ -26,5 +40,11 @@ export const dataset = <S extends Shape>(
     (values as InferShape<S>[]).map(record => Object.freeze(record))
   )
 
-  return Object.freeze({ features, rows: parsed })
+  // randomSplit returns the union of both results; the cast hands the narrowing
+  // to the overloads on Dataset.split, which match what randomSplit returns.
+  const split = ((
+    options: RandomSplitOptions & { readonly validation?: number }
+  ) => randomSplit<S>(parsed, options)) as Dataset<S>['split']
+
+  return Object.freeze({ features, rows: parsed, split })
 }

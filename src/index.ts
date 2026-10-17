@@ -25,8 +25,12 @@ export type Infer<F extends { readonly infer: unknown }> = F['infer']
 
 export type {
   Dataset,
+  RandomSplitOptions,
+  RandomSplitWithValidationOptions,
   Test,
   Train,
+  TrainTest,
+  TrainValidationTest,
   Validation
 } from './dataset/index.ts'
 export type {

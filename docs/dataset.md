@@ -21,11 +21,11 @@ Three *branded* types: they have the same shape but aren't interchangeable.
 
 Without a validation set, the only way to compare models is to look at the test set, and then the test score stops being an honest estimate: the chosen model is the one that got lucky on it.
 
-**The role of a block depends on what was split:**
+**Roles are assigned once; training data can be resampled:**
 
-- splitting the original data produces a `Test<F>`;
-- splitting a `Train<F>` again produces a `Validation<F>`;
-- a `Test<F>` can't be split. That is a compile-time error.
+- `split` exists only on the original data. It assigns every row a role, once, and its blocks can't be split again;
+- [splitters](#folds) (`kFold`, `walkForward`) estimate performance by resampling. They accept the original data or a `Train<F>`, and on a `Train<F>` each fold holds out a `Validation<F>`;
+- a `Validation<F>` or a `Test<F>` can't be split or resampled. That is a compile-time error.
 
 So a validation block always comes from training data, and nothing built from a `Train<F>` can reach the `Test<F>`.
 
@@ -50,6 +50,9 @@ const { train, validation, test } = data.split({
 
 - **`stratify`:** `{ ..., stratify: 'species' }` keeps the proportion of each category in every block. Only `category` and `orderedCategory` fields are accepted. With imbalanced classes, a split without it can leave a class almost absent from the test set.
 - The returned blocks follow the options: `validation` only exists when it was asked for.
+- `test` and `validation` are fractions of the whole dataset, rounded up; `train` gets the rest.
+- The test block is cut first. With the same `seed` and `test`, adding or changing `validation` keeps the same test block, so validation choices can be compared against a fixed test set.
+- The options are checked at the call: fractions must be in (0, 1) and leave rows for training after rounding, and `seed` must be an integer from 0 to 2³²−1. Anything else throws a `RangeError`.
 
 A random split doesn't exist on `Series<F>`. Shuffling time-ordered data leaks the future into training.
 
@@ -126,7 +129,7 @@ The transformers and the estimator are refit on every fold (see [Pipeline](pipel
 
 ### Nested validation
 
-Because splits compose, nested cross-validation is just folds inside folds: an outer splitter estimates how good the whole process is, and an inner one, applied to each outer `Train<F>`, chooses hyperparameters.
+Because splitters compose, nested cross-validation is just folds inside folds: an outer splitter estimates how good the whole process is, and an inner one, applied to each outer `Train<F>`, chooses hyperparameters.
 
 ```
 outer fold 1: [ outer train ──────────────── ][test]

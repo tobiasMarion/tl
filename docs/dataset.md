@@ -33,7 +33,7 @@ So a validation block always comes from training data, and nothing built from a 
 |------------------------|----------------------------|
 | `model.fit(...)`       | `Train<F>`                 |
 | `fitted.evaluate(...)` | `Validation<F>`, `Test<F>` |
-| `fitted.predict(...)`  | raw record `F`             |
+| `fitted.predict(...)`  | typed record `F`           |
 
 ## Random split
 

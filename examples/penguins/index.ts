@@ -46,9 +46,14 @@ console.log(entry)
 const data = ml.dataset(penguins, rows)
 console.log(`${data.rows.length} valid penguins`)
 
-const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
+const { train, validation, test } = data.split({
+  validation: 0.15,
+  test: 0.15,
+  seed: 42,
+  stratify: 'species'
+})
 console.log(
-  `${train.rows.length} for training, ${test.rows.length} for testing`
+  `${train.rows.length} for training, ${validation.rows.length} for validation, ${test.rows.length} for testing`
 )
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────

@@ -25,12 +25,16 @@ export const ml = Object.freeze({
 export type Infer<F extends { readonly infer: unknown }> = F['infer']
 
 export type {
+  ChronologicalSplitOptions,
+  ChronologicalSplitWithValidationOptions,
   Dataset,
+  Gap,
   RandomSplitOptions,
   RandomSplitWithValidationOptions,
   Series,
   SeriesOptions,
   Test,
+  TimestampInput,
   Train,
   TrainTest,
   TrainValidationTest,

@@ -21,3 +21,18 @@ export type Validation<S extends Shape> = {
   readonly rows: readonly InferShape<S>[]
   readonly [role]: 'validation'
 }
+
+// The roles are type-only brands, so a frozen { rows } is all a block needs at
+// runtime. These casts are the one place where blocks are created; the splits
+// pass in a new array of rows in the order the block should keep.
+const block = <S extends Shape>(rows: InferShape<S>[]) =>
+  Object.freeze({ rows: Object.freeze(rows) })
+
+export const trainBlock = <S extends Shape>(rows: InferShape<S>[]) =>
+  block(rows) as Train<S>
+
+export const validationBlock = <S extends Shape>(rows: InferShape<S>[]) =>
+  block(rows) as Validation<S>
+
+export const testBlock = <S extends Shape>(rows: InferShape<S>[]) =>
+  block(rows) as Test<S>

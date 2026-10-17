@@ -70,6 +70,26 @@
     "bodyCondition": "good"
   },
   {
+    "species": "Chinstrap",
+    "island": "Dream",
+    "billLengthMm": 51.3,
+    "billDepthMm": 19.2,
+    "flipperLengthMm": 193,
+    "bodyMassG": 3650,
+    "sex": "male",
+    "bodyCondition": "good"
+  },
+  {
+    "species": "Chinstrap",
+    "island": "Dream",
+    "billLengthMm": 45.4,
+    "billDepthMm": 18.7,
+    "flipperLengthMm": 188,
+    "bodyMassG": 3525,
+    "sex": "female",
+    "bodyCondition": "poor"
+  },
+  {
     "species": "Gentoo",
     "island": "Biscoe",
     "billLengthMm": 46.1,
@@ -85,6 +105,26 @@
     "billLengthMm": 50.0,
     "billDepthMm": 16.3,
     "flipperLengthMm": 230,
+    "bodyMassG": 5700,
+    "sex": "male",
+    "bodyCondition": "good"
+  },
+  {
+    "species": "Gentoo",
+    "island": "Biscoe",
+    "billLengthMm": 48.7,
+    "billDepthMm": 14.1,
+    "flipperLengthMm": 210,
+    "bodyMassG": 4450,
+    "sex": "female",
+    "bodyCondition": "fair"
+  },
+  {
+    "species": "Gentoo",
+    "island": "Biscoe",
+    "billLengthMm": 50.0,
+    "billDepthMm": 15.2,
+    "flipperLengthMm": 218,
     "bodyMassG": 5700,
     "sex": "male",
     "bodyCondition": "good"

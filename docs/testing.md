@@ -31,10 +31,12 @@ Some important negative cases:
 - `.estimator()` called with pending decisions;
 - an implementation option that doesn't apply to the chosen solver;
 - a metric that doesn't match the problem type;
-- a random split on a `Series<F>`;
+- a random split or k-fold on a `Series<F>`;
+- splitting a `Test<F>` again;
+- `stratify` on a field that isn't a category;
 - `lag`/`rolling` on a non-temporal `Dataset<F>`;
 - a walk-forward `gap` smaller than the target `horizon`.
 
 ## Look-ahead tests
 
-Type tests don't catch every leak. For each temporal transformer, a runtime test changes the data **after** `t` and checks that the features at `t` stay the same. For walk-forward, a test checks that no training index of a fold is greater than or equal to a test index minus `gap`.
+Type tests don't catch every leak. For each temporal transformer, a runtime test changes the data **after** `t` and checks that the features at `t` stay the same. For walk-forward, a test checks that no training index of a fold is greater than or equal to a test index minus `gap`. For k-fold, a test checks that every row is held out exactly once and never trains in the same fold.

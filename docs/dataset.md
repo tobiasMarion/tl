@@ -9,25 +9,86 @@ Both validate the records against the schema at runtime, once, at the entry poin
 
 The two are distinct types, and each one exposes only the splits that make sense for it.
 
-## Split with branded types
+## Train, validation, and test
+
+Three *branded* types: they have the same shape but aren't interchangeable.
+
+| Type            | Used for                                                       |
+|-----------------|----------------------------------------------------------------|
+| `Train<F>`      | fitting transformers and the estimator                         |
+| `Validation<F>` | comparing models and hyperparameters during development        |
+| `Test<F>`       | the final estimate, after every choice has been made           |
+
+Without a validation set, the only way to compare models is to look at the test set, and then the test score stops being an honest estimate: the chosen model is the one that got lucky on it.
+
+**The role of a block depends on what was split:**
+
+- splitting the original data produces a `Test<F>`;
+- splitting a `Train<F>` again produces a `Validation<F>`;
+- a `Test<F>` can't be split. That is a compile-time error.
+
+So a validation block always comes from training data, and nothing built from a `Train<F>` can reach the `Test<F>`.
+
+| Operation              | Accepts                    |
+|------------------------|----------------------------|
+| `model.fit(...)`       | `Train<F>`                 |
+| `fitted.evaluate(...)` | `Validation<F>`, `Test<F>` |
+| `fitted.predict(...)`  | raw record `F`             |
+
+## Random split
+
+Only on `Dataset<F>`.
 
 ```ts
-// Dataset<F>
-const { train, test } = data.split({ test: 0.2, seed: 42 }) // Series<F>
-const { train, test } = series.split({ until: '2024-12-31', gap: 1 })
+const { train, test } = data.split({ test: 0.2, seed: 42 })
+const { train, validation, test } = data.split({
+  validation: 0.15,
+  test: 0.15,
+  seed: 42
+})
 ```
 
-Both return `Train<F>` and `Test<F>`. These are *branded* types: they have the same shape but aren't interchangeable.
+- **`stratify`:** `{ ..., stratify: 'species' }` keeps the proportion of each category in every block. Only `category` and `orderedCategory` fields are accepted. With imbalanced classes, a split without it can leave a class almost absent from the test set.
+- The returned blocks follow the options: `validation` only exists when it was asked for.
 
-| Operation              | Accepts          |
-|------------------------|------------------|
-| `model.fit(...)`       | `Train<F>`       |
-| `fitted.evaluate(...)` | `Test<F>`        |
-| `fitted.predict(...)`  | raw record `F`   |
+A random split doesn't exist on `Series<F>`. Shuffling time-ordered data leaks the future into training.
 
-A random split (`{ test, seed }`) doesn't exist on `Series<F>`. Shuffling time-ordered data leaks the future into training.
+## Chronological split
+
+Only on `Series<F>`. Blocks follow time order: train, then validation, then test.
+
+```ts
+const { train, test } = prices.split({ testFrom: '2025-01-01', gap: 1 })
+const { train, validation, test } = prices.split({
+  validationFrom: '2024-07-01',
+  testFrom: '2025-01-01',
+  gap: 1
+})
+```
+
+`gap` periods are dropped before each block that follows the training data, for the same reason as in [walk-forward](#walk-forward).
+
+## k-fold
+
+Only on `Dataset<F>`. The data is shuffled with `seed` and cut into `k` folds; each fold is held out once while the others train.
+
+```ts
+ml.kFold({ k: 5, seed: 42 })
+ml.kFold({ k: 5, seed: 42, stratify: 'species' })
+```
+
+```
+fold 1  [held out][train ────────────────────]
+fold 2  [train ───][held out][train ─────────]
+fold 3  [train ────────────][held out][train ]
+...
+```
+
+Every row is held out exactly once, so the whole dataset contributes to the estimate. It is the counterpart of walk-forward for data without order. On a `Series<F>` it doesn't exist: blocks after the held-out one would train on the future.
 
 ## Walk-forward
+
+Only on `Series<F>`.
 
 ```ts
 ml.walkForward({
@@ -46,23 +107,53 @@ fold 3  [train ─────────────────────�
 ```
 
 - **`train`:** an expanding window keeps all history; a rolling window keeps the last N periods.
-- **`test`:** the size of each test block.
+- **`test`:** the size of each held-out block.
 - **`step`:** how far the window moves between folds.
-- **`gap`:** periods dropped between train and test (embargo). It has to cover at least the target horizon, otherwise the last training labels overlap the test period.
+- **`gap`:** periods dropped between train and the held-out block (embargo). It has to cover at least the target horizon, otherwise the last training labels overlap the held-out period.
 
-Each fold produces a `Train<F>`/`Test<F>` pair. The transformers and the estimator are refit on every fold (see [Pipeline](pipeline.md#backtest)).
+With `group`, all groups share the same time cut, so no ticker sees a period that is in another ticker's held-out block.
 
-With `group`, all groups share the same time cut, so no ticker sees a period that is in another ticker's test set.
+## Folds
+
+`kFold` and `walkForward` are splitters: they don't hold data, they describe how to cut it. Applied to data they produce one pair per fold, following the same role rule as `split`:
+
+| Splitter applied to          | Each fold                     |
+|------------------------------|-------------------------------|
+| the original data            | `Train<F>` / `Test<F>`        |
+| a `Train<F>`                 | `Train<F>` / `Validation<F>`  |
+
+The transformers and the estimator are refit on every fold (see [Pipeline](pipeline.md#backtest)).
+
+### Nested validation
+
+Because splits compose, nested cross-validation is just folds inside folds: an outer splitter estimates how good the whole process is, and an inner one, applied to each outer `Train<F>`, chooses hyperparameters.
+
+```
+outer fold 1: [ outer train ──────────────── ][test]
+                └─ inner folds on the outer train:
+                   [train ──────][valid.]   k = 3?
+                   [train ──][valid.][───]  k = 5?
+                → best choice, refit on the whole outer train, evaluate on test
+outer fold 2: ...
+```
+
+Picking hyperparameters with cross-validation and reporting that same score is optimistic: the winner is the configuration that got lucky on those folds. With nested validation the choice only ever sees inner validation blocks, and the outer test blocks measure the process including the choice. Each outer fold may choose differently; the result is an estimate of "run this search, then train", not a single best value.
+
+M2 provides the composable splits and their type rules. The search API that runs the inner loop (for example `ml.search({ k: [3, 5, 7] }, { inner: ml.kFold({ k: 5, seed: 42 }) })`) depends on the pipeline and comes with the first algorithm that has a real hyperparameter (M6).
 
 ## Required decisions
 
-- Split strategy and its parameters. There is no default `test` size and no default window.
-- `seed` for random splits.
+- Split strategy and its parameters. There is no default `test` or `validation` size, no default `k`, and no default window.
+- `seed` for random splits and k-fold.
 - `gap` for temporal splits. `0` is allowed, but it has to be written down explicitly.
+
+## After the MVP
+
+- **Purged and embargoed k-fold** (López de Prado): k-fold on a series, with the held-out block in the middle. *Purge* drops training rows whose label overlaps the held-out period (a 5-day return label computed with prices inside it); *embargo* drops training rows right after the held-out block, whose `lag`/`rolling` features were computed from it. It uses the whole series for testing, which helps with short histories, at the cost of training on data later than the test. It needs each label's horizon and each feature's time footprint.
+- **Group k-fold:** rows of the same group (for example, the same patient) never appear on both sides of a fold.
 
 ## Open questions
 
-- Purged and embargoed k-fold cross-validation (López de Prado).
-- Stratified split for classification.
-- A separate validation set (`train` / `validation` / `test`) for hyperparameter tuning inside each fold.
+- Whether `Test<F>` gets its own final-evaluation API instead of sharing `evaluate` with `Validation<F>`, to make "evaluate on test once, at the end" explicit.
+- Whether `stratify` should be a required decision for classification targets.
 - Time units for `window`, `step`, and `gap`: rows, or calendar periods (`'1M'`)?

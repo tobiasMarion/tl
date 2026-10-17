@@ -1,3 +1,4 @@
+import { dataset } from './dataset/index.ts'
 import {
   boolean,
   category,
@@ -15,12 +16,19 @@ export const ml = Object.freeze({
   boolean,
   category,
   orderedCategory,
-  timestamp
+  timestamp,
+  dataset
 })
 
 /** The record type described by a `Features` schema. */
 export type Infer<F extends { readonly infer: unknown }> = F['infer']
 
+export type {
+  Dataset,
+  Test,
+  Train,
+  Validation
+} from './dataset/index.ts'
 export type {
   AnyField,
   BooleanField,

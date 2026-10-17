@@ -22,6 +22,8 @@ penguins.parse(record) // one record
 penguins.parseRows(rows) // many records, issues grouped by field
 ```
 
+Training data doesn't need `parseRows`: `ml.dataset` validates its rows. `parse` and `parseRows` validate records on their own, for example a form entry or a request that goes to `predict`, which trusts its typed input. A project that already validates with Zod (or another Standard Schema library) can keep doing so and derive the features with [`ml.fromSchema`](#zod-compatibility-through-standard-schema).
+
 ## Requirements
 
 - Infer the record type from the schema.

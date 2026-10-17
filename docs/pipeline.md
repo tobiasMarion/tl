@@ -26,7 +26,7 @@ features ─► pipeline ─► missing / encode / scale ─► estimator ─►
 3. fits the estimator;
 4. stores the learned states.
 
-`predict` reapplies the same transformations to the new record and only then predicts.
+`predict` takes a record that is already typed, reapplies the same transformations, and only then predicts. It doesn't validate the record again: external data is validated at the boundary, with `parse` or with the project's own schema (Zod, for example), and from then on the type carries the guarantee. Unknown categories and missing values aren't schema checks; they follow the policies chosen in the pipeline.
 
 ## Pending decisions
 

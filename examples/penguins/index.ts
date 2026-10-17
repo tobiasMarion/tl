@@ -26,12 +26,26 @@ const penguins = ml.features({
 
 type Penguin = typeof penguins.infer
 
-const records: Penguin[] = penguins.parseRows(rows)
-console.log(`${records.length} valid penguins`)
+// Validating a single record on its own, for example a form entry. Training
+// rows go through ml.dataset below; predict trusts typed input like this one.
+const entry: Penguin = penguins.parse({
+  species: 'Gentoo',
+  island: 'Biscoe',
+  billLengthMm: 47.5,
+  billDepthMm: null,
+  flipperLengthMm: 218,
+  bodyMassG: 4950,
+  sex: 'male',
+  bodyCondition: 'good'
+})
+console.log(entry)
 
 // ── M2: Dataset and split ────────────────────────────────────────────────────
 
-// const data = ml.dataset(penguins, rows)
+// The entry point for training rows: validated once, here.
+const data = ml.dataset(penguins, rows)
+console.log(`${data.rows.length} valid penguins`)
+
 // const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────

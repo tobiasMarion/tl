@@ -24,8 +24,10 @@ Each step of the workflow exposes only the methods that make sense there, so aut
 TypeScript types don't guarantee that external data is correct. So the library combines:
 
 - **static guarantees** for known contracts (schema, pipeline composition, `Train`/`Test`);
-- **runtime validation** for external inputs (CSV, APIs);
+- **runtime validation** for external inputs (CSV, APIs), only at the entry points (`parse`, `parseRows`, `ml.dataset`);
 - **internal conversion** to numerical representations.
+
+This is a TypeScript library, and it relies on the type system. After an entry point, functions trust their types and don't check again: the type system can be bypassed (`as`, untyped JavaScript), but repeating the checks in every function would make every call pay for it.
 
 We don't try to encode in the types matrix dimensions, convergence state, or anything else that is only known at runtime.
 

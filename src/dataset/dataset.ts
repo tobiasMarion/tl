@@ -1,7 +1,9 @@
 import type { Features } from '../features/features.ts'
+import type { CategoryField, OrderedCategoryField } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { FeatureValidationError, validateRows } from '../features/validate.ts'
 import {
+  type CategoryKeys,
   type RandomSplitOptions,
   type RandomSplitWithValidationOptions,
   randomSplit,
@@ -12,13 +14,34 @@ import {
 export interface Dataset<S extends Shape> {
   readonly features: Features<S>
   readonly rows: readonly InferShape<S>[]
+  // The stratify keys are spelled out instead of written as CategoryKeys<S>:
+  // TypeScript keeps an alias name in hovers and errors, so a wrong field would
+  // report CategoryKeys<{ ...the whole schema }> instead of the valid fields.
   /**
    * Shuffles the rows with `seed` and holds out a `validation` and a `test`
    * fraction.
    */
-  split(options: RandomSplitWithValidationOptions): TrainValidationTest<S>
+  split(
+    options: RandomSplitWithValidationOptions<
+      {
+        [K in keyof S]: S[K] extends CategoryField | OrderedCategoryField
+          ? K
+          : never
+      }[keyof S] &
+        string
+    >
+  ): TrainValidationTest<S>
   /** Shuffles the rows with `seed` and holds out a `test` fraction. */
-  split(options: RandomSplitOptions): TrainTest<S>
+  split(
+    options: RandomSplitOptions<
+      {
+        [K in keyof S]: S[K] extends CategoryField | OrderedCategoryField
+          ? K
+          : never
+      }[keyof S] &
+        string
+    >
+  ): TrainTest<S>
 }
 
 export const dataset = <S extends Shape>(
@@ -43,8 +66,10 @@ export const dataset = <S extends Shape>(
   // randomSplit returns the union of both results; the cast hands the narrowing
   // to the overloads on Dataset.split, which match what randomSplit returns.
   const split = ((
-    options: RandomSplitOptions & { readonly validation?: number }
-  ) => randomSplit<S>(parsed, options)) as Dataset<S>['split']
+    options: RandomSplitOptions<CategoryKeys<S>> & {
+      readonly validation?: number
+    }
+  ) => randomSplit<S>(features, parsed, options)) as Dataset<S>['split']
 
   return Object.freeze({ features, rows: parsed, split })
 }

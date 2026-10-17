@@ -60,3 +60,24 @@ split.train.split({ test: 0.2, seed: 42 })
 
 // @ts-expect-error — roles are assigned once: a block can't be split again
 split.test.split({ test: 0.2, seed: 42 })
+
+// stratify accepts required category and ordered category fields
+const animals = ml.features({
+  species: ml.category(['a', 'b']),
+  size: ml.orderedCategory(['small', 'large']),
+  island: ml.category(['x', 'y']).optional(),
+  weight: ml.number()
+})
+const zoo = ml.dataset(animals, [])
+zoo.split({ test: 0.2, seed: 42, stratify: 'species' })
+zoo.split({ test: 0.2, seed: 42, stratify: 'size' })
+zoo.split({ validation: 0.1, test: 0.2, seed: 42, stratify: 'species' })
+
+// @ts-expect-error — stratify only accepts category fields
+zoo.split({ test: 0.2, seed: 42, stratify: 'weight' })
+
+// @ts-expect-error — an optional category would need a decision about missing values
+zoo.split({ test: 0.2, seed: 42, stratify: 'island' })
+
+// @ts-expect-error — stratify only accepts fields of the schema
+zoo.split({ test: 0.2, seed: 42, stratify: 'specie' })

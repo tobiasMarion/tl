@@ -8,7 +8,7 @@ TL is a Machine Learning library in TypeScript built to test the premise that a 
 
 ## The premise
 
-In libraries like scikit-learn, the workflow is implicit: any array can go into any function, and the decisions that change the result hide behind defaults. TL bets on the opposite:
+TL bets on making the workflow explicit:
 
 - each step exposes only the valid next steps, so `Train`, `Validation` and `Test` are different types and a test block can't be trained on;
 - decisions that change the result (split strategy, seed, gap, missing values, unknown categories, solver) are required and have no default;
@@ -19,7 +19,7 @@ Whether that works is the question, not the claim.
 
 ## How we test it
 
-1. **Coverage.** [Methodological errors](docs/methodology.md) lists the known errors and records, for each one, whether TL catches it at compile time, at runtime, by design, or not at all, next to what scikit-learn does. Every claim there has a test in `test/methodology/`.
+1. **Coverage.** [Methodological errors](docs/methodology.md) lists the known errors and records, for each one, whether TL catches it at compile time, at runtime, by design, or not at all. Every claim there has a test in `test/methodology/`.
 2. **Effect.** Once a model can be trained and evaluated end to end, coding agents get the same tasks, with errors planted in them and a holdout they never see, in three arms: scikit-learn, TL without types, and TL with the type checker in the agent's loop. The outcome is how much the reported score overstates the holdout score. Agents are a fair first subject: types are feedback in their loop, so the experiment also measures how much semantic types help an agent harness.
 3. **People.** If the effect shows up with agents, a small study with people checks whether it holds.
 
@@ -122,7 +122,7 @@ After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural 
 
 | Document | Contents |
 |----------|----------|
-| [Methodological errors](docs/methodology.md) | The errors the premise is about, what TL and scikit-learn do about each one, and how to measure the effect |
+| [Methodological errors](docs/methodology.md) | The errors the premise is about, what TL does about each one, and how to measure the effect |
 | [Design principles](docs/principles.md) | Explicit decisions, time series from the start, static + runtime typing |
 | [Feature DSL](docs/features.md) | Field types, inference, validation, Zod compatibility through Standard Schema |
 | [Dataset and validation](docs/dataset.md) | Splits, walk-forward, branded types, leakage prevention |

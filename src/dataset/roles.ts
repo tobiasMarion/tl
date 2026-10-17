@@ -1,22 +1,23 @@
 import type { InferShape, Shape } from '../features/infer.ts'
 
-declare const trainRole: unique symbol
+// One brand for all roles, with the role as its value. Passing a test block
+// where a training block is expected then reports
+// `Type '"test"' is not assignable to type '"train"'`. The symbol isn't
+// exported, so only the library can create a block.
+declare const role: unique symbol
 
-export interface Train<S extends Shape> {
+// Type aliases, not interfaces: see Type quality in docs/principles.md.
+export type Train<S extends Shape> = {
   readonly rows: readonly InferShape<S>[]
-  readonly [trainRole]: true
+  readonly [role]: 'train'
 }
 
-declare const testRole: unique symbol
-
-export interface Test<S extends Shape> {
+export type Test<S extends Shape> = {
   readonly rows: readonly InferShape<S>[]
-  readonly [testRole]: true
+  readonly [role]: 'test'
 }
 
-declare const validationRole: unique symbol
-
-export interface Validation<S extends Shape> {
+export type Validation<S extends Shape> = {
   readonly rows: readonly InferShape<S>[]
-  readonly [validationRole]: true
+  readonly [role]: 'validation'
 }

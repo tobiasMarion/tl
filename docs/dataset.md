@@ -5,7 +5,11 @@
 - `ml.dataset(features, rows)`: rows have no meaningful order.
 - `ml.series(features, rows, { time, group? })`: rows are ordered by `time`. `group` identifies independent series in panel data (for example, one series per ticker).
 
-Both validate the records against the schema at runtime, once, at the entry point. The dataset, its rows, and each record are frozen; the caller's rows are left untouched. `series` also checks that timestamps are valid and that there are no duplicates within a group.
+`time` must be a required `timestamp` field and `group` a required `category` field: a row without a time has no place in the series, and a row without a group belongs to no series. A wrong field is a type error that lists the valid ones.
+
+`series` sorts the rows by `time`, and rows at the same time by the order of the `group` categories in the schema. The input order carries no information beyond the timestamps, so sorting changes no result, and the same rows give the same series in any order. Timestamps are milliseconds since 1970 (see [timestamps](features.md#runtime-validation)).
+
+Both validate the records against the schema at runtime, once, at the entry point. The dataset, its rows, and each record are frozen; the caller's rows are left untouched. `series` also rejects a time that repeats within a group (or anywhere, without a group), with a `FeatureValidationError` whose `duplicate_time` issue lists the rows. Times are compared as instants: `'2025-01-01T03:00:00Z'` and `'2025-01-01T00:00:00-03:00'` repeat.
 
 The two are distinct types, and each one exposes only the splits that make sense for it.
 

@@ -1,18 +1,27 @@
 # TL
 
-A Machine Learning library in TypeScript, with the math implemented by hand and an API that **guides the user through the ML workflow**. Tabular data is the main use case; time series are supported from the start.
+An experiment: **can types prevent the methodological errors that make machine learning models look better than they are?**
 
-## Proposal
+Leaking test data into training, splitting a time series at random, picking hyperparameters by their test score: the code runs, the model trains, and the reported score is wrong. Kapoor & Narayanan found errors like these in hundreds of published papers across seventeen fields. They are hard to see in review, because the code is correct as code.
 
-In libraries like scikit-learn, it is not always clear what the next step is or which decisions must be made before taking it. Many of those decisions hide behind silent defaults. This project has two goals:
+TL is a Machine Learning library in TypeScript built to test the premise that a typed API can turn those errors into compile errors, or at least into errors at the call. It is also a sandbox for learning ML: every algorithm is written by hand, math first.
 
-1. **Learn ML by implementing the algorithms by hand**, understanding the math behind each one.
-2. **Build an API that makes the workflow explicit:**
-   - each step exposes only the valid next steps;
-   - decisions that change the result (missing values, unknown categories, solver, regularization, split strategy) are required and have no default;
-   - mistakes such as *data leakage* or pending decisions are caught at compile time whenever possible;
-   - time series are considered in the design from the start: temporal splits, walk-forward validation, and look-ahead-safe features; a random split on a time series doesn't compile;
-   - external data is validated at runtime.
+## The premise
+
+In libraries like scikit-learn, the workflow is implicit: any array can go into any function, and the decisions that change the result hide behind defaults. TL bets on the opposite:
+
+- each step exposes only the valid next steps, so `Train`, `Validation` and `Test` are different types and a test block can't be trained on;
+- decisions that change the result (split strategy, seed, gap, missing values, unknown categories, solver) are required and have no default;
+- time series are part of the design from the start: a random split of a series doesn't compile, and temporal splits require a gap;
+- what the types can't check, such as external data, is validated at runtime, once, at the entry points.
+
+Whether that works is the question, not the claim.
+
+## How we test it
+
+1. **Coverage.** [Methodological errors](docs/methodology.md) lists the known errors and records, for each one, whether TL catches it at compile time, at runtime, by design, or not at all, next to what scikit-learn does. Every claim there has a test in `test/methodology/`.
+2. **Effect.** Once a model can be trained and evaluated end to end, coding agents get the same tasks, with errors planted in them and a holdout they never see, in three arms: scikit-learn, TL without types, and TL with the type checker in the agent's loop. The outcome is how much the reported score overstates the holdout score. Agents are a fair first subject: types are feedback in their loop, so the experiment also measures how much semantic types help an agent harness.
+3. **People.** If the effect shows up with agents, a small study with people checks whether it holds.
 
 Priorities: correctness, understanding, and interface quality. Performance comes later.
 
@@ -113,6 +122,7 @@ After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural 
 
 | Document | Contents |
 |----------|----------|
+| [Methodological errors](docs/methodology.md) | The errors the premise is about, what TL and scikit-learn do about each one, and how to measure the effect |
 | [Design principles](docs/principles.md) | Explicit decisions, time series from the start, static + runtime typing |
 | [Feature DSL](docs/features.md) | Field types, inference, validation, Zod compatibility through Standard Schema |
 | [Dataset and validation](docs/dataset.md) | Splits, walk-forward, branded types, leakage prevention |

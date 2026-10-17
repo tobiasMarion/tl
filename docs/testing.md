@@ -40,3 +40,7 @@ Some important negative cases:
 ## Look-ahead tests
 
 Type tests don't catch every leak. For each temporal transformer, a runtime test changes the data **after** `t` and checks that the features at `t` stay the same. For walk-forward, a test checks that no training index of a fold is greater than or equal to a test index minus `gap`. For k-fold, a test checks that every row is held out exactly once and never trains in the same fold.
+
+## Methodology tests
+
+`test/methodology/` backs the matrix in [Methodological errors](methodology.md). Every error the library catches today has a test named by its ID: the compile-time ones in `errors.types.ts` with `@ts-expect-error`, the runtime and by-design ones in `errors.test.ts`. A status in the matrix changes in the same commit as its test.

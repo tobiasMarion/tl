@@ -43,8 +43,11 @@ type AutoField<Value, IsOptional extends boolean> = [Value] extends [number]
         : WithPresence<CategoryField<Value>, IsOptional>
       : never
 
+// `T[K] & {}` instead of NonNullable<T[K]>: same type, but TypeScript keeps
+// the NonNullable alias in hovers (CategoryField<NonNullable<"a" | "b">>),
+// while the intersection is simplified right away (CategoryField<"a" | "b">).
 type AutoShape<T> = {
-  [K in keyof T]-?: AutoField<NonNullable<T[K]>, IsOptionalKey<T, K>>
+  [K in keyof T]-?: AutoField<T[K] & {}, IsOptionalKey<T, K>>
 }
 
 /** Keys that can't be mapped automatically, such as free strings and dates. */
@@ -67,6 +70,14 @@ export type FromSchemaShape<T, O> = Simplify<{
       : Extract<AutoShape<T>[K], AnyField>
     : Extract<AutoShape<T>[K], AnyField>
 }>
+
+// O is inferred through a generic, which turns off excess property checks, so
+// an override for a field the schema doesn't have would compile and only fail
+// at runtime. This brings the check back and says why in the error:
+// `Type 'NumberField' is not assignable to type '"not a field of the schema"'`.
+type NoExtraKeys<O, T> = {
+  readonly [K in Exclude<keyof O, keyof T>]: 'not a field of the schema'
+}
 
 type Output<S extends StandardSchemaV1> = StandardSchemaV1.InferOutput<S>
 
@@ -154,8 +165,8 @@ export const fromSchema = <
 >(
   schema: S,
   ...[overrides]: [UnmappableKeys<Output<S>>] extends [never]
-    ? [overrides?: O]
-    : [overrides: O]
+    ? [overrides?: O & NoExtraKeys<O, Output<S>>]
+    : [overrides: O & NoExtraKeys<O, Output<S>>]
 ): Features<FromSchemaShape<Output<S>, O>> => {
   const json = readJsonSchema(schema)
   const properties = json.properties as Record<string, unknown>

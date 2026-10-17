@@ -11,7 +11,8 @@ import {
   type TrainValidationTest
 } from './split.ts'
 
-export interface Dataset<S extends Shape> {
+// A type alias, not an interface: see Type quality in docs/principles.md.
+export type Dataset<S extends Shape> = {
   readonly features: Features<S>
   readonly rows: readonly InferShape<S>[]
   // The stratify keys are spelled out instead of written as CategoryKeys<S>:

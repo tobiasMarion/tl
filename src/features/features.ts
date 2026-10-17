@@ -10,8 +10,8 @@ const FIELD_KINDS: ReadonlySet<unknown> = new Set([
   'timestamp'
 ])
 
-export interface Features<S extends Shape>
-  extends StandardSchemaV1<InferShape<S>> {
+// A type alias, not an interface: see Type quality in docs/principles.md.
+export type Features<S extends Shape> = StandardSchemaV1<InferShape<S>> & {
   readonly fields: S
   /** Field names, in declaration order. */
   readonly keys: readonly Extract<keyof S, string>[]

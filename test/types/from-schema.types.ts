@@ -66,3 +66,16 @@ type _overrides = Expect<
     }
   >
 >
+
+// @ts-expect-error — weight is not a field of the schema
+ml.fromSchema(Penguin, { weight: ml.number() })
+
+ml.fromSchema(Observation, {
+  notes: ml.category(['calm']),
+  observedAt: ml.timestamp(),
+  // @ts-expect-error — weight is not a field of the schema
+  weight: ml.number()
+})
+
+// Overriding a field that maps automatically is still allowed
+ml.fromSchema(Penguin, { isAdult: ml.category(['yes', 'no']) })

@@ -31,6 +31,18 @@ describe('dataset', () => {
     )
   })
 
+  test('starts the error stack at the dataset call', () => {
+    try {
+      dataset(penguins, [{ species: 'Emperor' }])
+    } catch (error) {
+      assert.ok(error instanceof FeatureValidationError)
+      const frame = error.stack?.split('\n').find(line => /^\s+at /.test(line))
+      assert.match(frame ?? '', /dataset\.test\.ts/)
+      return
+    }
+    assert.fail('expected a FeatureValidationError')
+  })
+
   test('freezes the dataset, its rows and each record', () => {
     const data = dataset(penguins, rows)
     assert.ok(Object.isFrozen(data))

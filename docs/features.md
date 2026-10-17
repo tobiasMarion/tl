@@ -135,7 +135,7 @@ const penguins = ml.fromSchema(Penguin, {
 | `.optional()`, `.nullable()` | `.optional()` |
 | anything else (`z.string()`, `z.date()`, …) | needs an override |
 
-Fields that can't be mapped make the override **required at compile time**: leaving one out is a type error that names the missing field. An override can also replace a mapped field, for example to change the category order.
+Fields that can't be mapped make the override **required at compile time**: leaving one out is a type error that names the missing field. An override can also replace a mapped field, for example to change the category order. An override for a field the schema doesn't have is a type error too.
 
 The Standard Schema interfaces are copied into `src/standard-schema.ts`, as the spec recommends, so there is no dependency on `@standard-schema/spec`. Zod is a `devDependency` used only in compatibility tests.
 

@@ -71,6 +71,14 @@ export type FromSchemaShape<T, O> = Simplify<{
     : Extract<AutoShape<T>[K], AnyField>
 }>
 
+// O is inferred through a generic, which turns off excess property checks, so
+// an override for a field the schema doesn't have would compile and only fail
+// at runtime. This brings the check back and says why in the error:
+// `Type 'NumberField' is not assignable to type '"not a field of the schema"'`.
+type NoExtraKeys<O, T> = {
+  readonly [K in Exclude<keyof O, keyof T>]: 'not a field of the schema'
+}
+
 type Output<S extends StandardSchemaV1> = StandardSchemaV1.InferOutput<S>
 
 // ── Runtime ──────────────────────────────────────────────────────────────────
@@ -157,8 +165,8 @@ export const fromSchema = <
 >(
   schema: S,
   ...[overrides]: [UnmappableKeys<Output<S>>] extends [never]
-    ? [overrides?: O]
-    : [overrides: O]
+    ? [overrides?: O & NoExtraKeys<O, Output<S>>]
+    : [overrides: O & NoExtraKeys<O, Output<S>>]
 ): Features<FromSchemaShape<Output<S>, O>> => {
   const json = readJsonSchema(schema)
   const properties = json.properties as Record<string, unknown>

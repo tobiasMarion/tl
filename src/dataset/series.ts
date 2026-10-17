@@ -5,7 +5,12 @@ import type {
   TimestampField
 } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
-import { FeatureValidationError, validateRows } from '../features/validate.ts'
+import {
+  FeatureValidationError,
+  type RepeatedTime,
+  repeatedTimesIssue,
+  validateRows
+} from '../features/validate.ts'
 
 export type SeriesOptions<Time extends string, Group extends string> = {
   /** Required timestamp field that orders the rows. */
@@ -99,25 +104,59 @@ export const series = <S extends Shape>(
     group === undefined ? [] : (fields[group] as CategoryField).categories
   const rank = new Map(categories.map((category, i) => [category, i]))
 
+  // checkKey made sure time is a required timestamp (milliseconds) and group
+  // a required category, so every record has both.
+  const records = values as Record<string, unknown>[]
+  const timeOf = (i: number) => records[i]?.[time] as number
+  const rankOf = (i: number) =>
+    group === undefined
+      ? 0
+      : (rank.get(records[i]?.[group] as string) as number)
+
   // Sorting by time doesn't change any result: in a series, the input order
-  // carries no information beyond the timestamps. Array.prototype.sort is
-  // stable, and ties between groups follow the category order, so the result
-  // doesn't depend on the input order either. checkKey made sure time is a
-  // required timestamp (milliseconds) and group a required category.
-  const sorted = (values as Record<string, unknown>[]).toSorted(
-    (a, b) =>
-      (a[time] as number) - (b[time] as number) ||
-      (group === undefined
-        ? 0
-        : (rank.get(a[group] as string) as number) -
-          (rank.get(b[group] as string) as number))
-  )
+  // carries no information beyond the timestamps. Ties between groups follow
+  // the category order, so the result doesn't depend on the input order
+  // either. Indices are sorted instead of records, so a repeated time can be
+  // reported with the caller's row indexes.
+  const order = records
+    .map((_, i) => i)
+    .sort((a, b) => timeOf(a) - timeOf(b) || rankOf(a) - rankOf(b))
+
+  // After sorting, rows with the same time and group are next to each other
+  const repeats: RepeatedTime[] = []
+  for (let start = 0; start < order.length; ) {
+    let end = start + 1
+    const first = order[start] as number
+    while (
+      end < order.length &&
+      timeOf(order[end] as number) === timeOf(first) &&
+      rankOf(order[end] as number) === rankOf(first)
+    ) {
+      end++
+    }
+    if (end - start > 1) {
+      repeats.push({
+        time: timeOf(first),
+        group:
+          group === undefined ? undefined : (records[first]?.[group] as string),
+        rows: order.slice(start, end).toSorted((a, b) => a - b)
+      })
+    }
+    start = end
+  }
+  if (repeats.length > 0) {
+    throw new FeatureValidationError(
+      [repeatedTimesIssue(time, group, repeats)],
+      series
+    )
+  }
+
   // validateRows builds new records and every value is a primitive, so
   // freezing them makes the series fully immutable and leaves the caller's
   // rows untouched. The cast is safe: values are only returned when every
   // field passed its check.
   const parsed = Object.freeze(
-    (sorted as InferShape<S>[]).map(record => Object.freeze(record))
+    order.map(i => Object.freeze(records[i] as InferShape<S>))
   )
 
   return Object.freeze({ features, rows: parsed, time, group })

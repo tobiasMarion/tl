@@ -9,6 +9,7 @@ export type IssueCode =
   | 'invalid_type'
   | 'unknown_category'
   | 'invalid_timestamp'
+  | 'duplicate_time'
 
 export interface FeatureIssue {
   /** The field the issue refers to, or `undefined` when the whole record is invalid. */
@@ -60,7 +61,10 @@ export class FeatureValidationError extends Error {
 
 type Check =
   | { readonly ok: true; readonly value: unknown }
-  | { readonly ok: false; readonly code: Exclude<IssueCode, 'invalid_record'> }
+  | {
+      readonly ok: false
+      readonly code: Exclude<IssueCode, 'invalid_record' | 'duplicate_time'>
+    }
 
 const isMissing = (value: unknown): boolean =>
   value === undefined ||
@@ -189,6 +193,62 @@ const buildMessage = (
     default:
       return `${name} expected ${expected}${where}, received ${samples}`
   }
+}
+
+// ── Repeated times in a series ───────────────────────────────────────────────
+
+export interface RepeatedTime {
+  /** Milliseconds since 1970. */
+  readonly time: number
+  /** The group value, when the series has a group. */
+  readonly group: string | undefined
+  /** Indexes of the rows that share this time, in the caller's order. */
+  readonly rows: readonly number[]
+}
+
+const repeatedTimesMessage = (
+  time: string,
+  group: string | undefined,
+  repeats: readonly RepeatedTime[],
+  paint: Paint
+): string => {
+  const rows = repeats.flatMap(repeat => repeat.rows).toSorted((a, b) => a - b)
+  const samples = repeats
+    .slice(0, MAX_SAMPLES)
+    .map(repeat => {
+      const at = paint.received(new Date(repeat.time).toISOString())
+      return repeat.group === undefined
+        ? at
+        : `${at} for ${paint.received(`'${repeat.group}'`)}`
+    })
+    .join(', ')
+  const more = repeats.length > MAX_SAMPLES ? ', …' : ''
+  const name = paint.field(`'${time}'`)
+  return group === undefined
+    ? `${name} repeats times${paint.hint(formatRows(rows))}: ${samples}${more}. ${paint.hint('Each time can appear once. Pass a group if the rows belong to different series')}`
+    : `${name} repeats times within the same ${paint.field(`'${group}'`)}${paint.hint(formatRows(rows))}: ${samples}${more}. ${paint.hint('Each time can appear once per series')}`
+}
+
+/** One issue for every time that repeats within a series. */
+export const repeatedTimesIssue = (
+  time: string,
+  group: string | undefined,
+  repeats: readonly RepeatedTime[]
+): FeatureIssue => {
+  const issue: FeatureIssue = {
+    field: time,
+    code: 'duplicate_time',
+    rows: repeats.flatMap(repeat => repeat.rows).toSorted((a, b) => a - b),
+    received: repeats.slice(0, MAX_SAMPLES).map(repeat => repeat.time),
+    message: repeatedTimesMessage(time, group, repeats, plain)
+  }
+  if (useColors) {
+    coloredMessages.set(
+      issue,
+      repeatedTimesMessage(time, group, repeats, terminal)
+    )
+  }
+  return issue
 }
 
 // ── Validating many rows ─────────────────────────────────────────────────────

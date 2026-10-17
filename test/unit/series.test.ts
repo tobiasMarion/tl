@@ -130,3 +130,81 @@ describe('series options', () => {
     })
   })
 })
+
+describe('series repeated times', () => {
+  const issueOf = (rows: object[], options: object) => {
+    try {
+      ml.series(prices, rows, options as never)
+    } catch (error) {
+      assert.ok(error instanceof FeatureValidationError)
+      assert.equal(error.issues.length, 1)
+      return error.issues[0]
+    }
+    assert.fail('expected a FeatureValidationError')
+  }
+
+  test('allows the same time in different groups', () => {
+    const data = ml.series(
+      prices,
+      [row('2025-01-01', 'AAPL', 1), row('2025-01-01', 'MSFT', 2)],
+      { time: 'date', group: 'ticker' }
+    )
+    assert.equal(data.rows.length, 2)
+  })
+
+  test('rejects a time repeated within a group', () => {
+    const issue = issueOf(
+      [
+        row('2025-01-01', 'AAPL', 1),
+        row('2025-01-01', 'MSFT', 2),
+        row('2025-01-01', 'AAPL', 3)
+      ],
+      { time: 'date', group: 'ticker' }
+    )
+    assert.equal(issue?.code, 'duplicate_time')
+    assert.equal(issue?.field, 'date')
+    assert.deepEqual(issue?.rows, [0, 2])
+    assert.deepEqual(issue?.received, [day('2025-01-01')])
+    assert.equal(
+      issue?.message,
+      "'date' repeats times within the same 'ticker' in 2 rows (index 0, 2): 2025-01-01T00:00:00.000Z for 'AAPL'. Each time can appear once per series"
+    )
+  })
+
+  test('rejects a repeated time without a group and suggests one', () => {
+    const issue = issueOf(
+      [row('2025-01-01', 'AAPL', 1), row('2025-01-01', 'MSFT', 2)],
+      { time: 'date' }
+    )
+    assert.equal(
+      issue?.message,
+      "'date' repeats times in 2 rows (index 0, 1): 2025-01-01T00:00:00.000Z. Each time can appear once. Pass a group if the rows belong to different series"
+    )
+  })
+
+  test('reports every repeat in one issue, with a few samples', () => {
+    const rows = ['01', '02', '03', '04'].flatMap(d => [
+      row(`2025-01-${d}`, 'AAPL', 1),
+      row(`2025-01-${d}`, 'AAPL', 2)
+    ])
+    const issue = issueOf(rows, { time: 'date', group: 'ticker' })
+    assert.deepEqual(issue?.rows, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert.equal(issue?.received.length, 3)
+    assert.match(
+      issue?.message ?? '',
+      /2025-01-03T00:00:00\.000Z for 'AAPL', …/
+    )
+  })
+
+  test('compares instants, not how they were written', () => {
+    // The same instant written in two time zones
+    const issue = issueOf(
+      [
+        { ...row('2025-01-01', 'AAPL', 1), date: '2025-01-01T03:00:00Z' },
+        { ...row('2025-01-01', 'AAPL', 2), date: '2025-01-01T00:00:00-03:00' }
+      ],
+      { time: 'date' }
+    )
+    assert.equal(issue?.code, 'duplicate_time')
+  })
+})

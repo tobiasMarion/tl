@@ -57,7 +57,8 @@ export const dataset = <S extends Shape>(
   if (issues.length > 0) throw new FeatureValidationError(issues, dataset)
 
   // validateRows builds new records, so freezing them leaves the caller's rows
-  // untouched. Dates inside them stay mutable: freeze can't reach their value.
+  // untouched. Every value is a primitive (timestamps are milliseconds, not
+  // Date objects), so freezing a record makes it fully immutable.
   // The cast is safe for the same reason as in parseRows: values are only
   // returned when every field passed its check.
   const parsed = Object.freeze(

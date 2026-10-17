@@ -15,6 +15,8 @@ const valid = {
   isAdult: true,
   observedAt: new Date('2007-11-10')
 }
+// What parse returns for `valid`: the timestamp in milliseconds since 1970
+const parsed = { ...valid, observedAt: 1194652800000 }
 
 const issuesOf = (fn: () => unknown) => {
   try {
@@ -67,11 +69,11 @@ describe('ml.features', () => {
 
 describe('parse', () => {
   test('returns the record', () => {
-    assert.deepEqual(penguins.parse(valid), valid)
+    assert.deepEqual(penguins.parse(valid), parsed)
   })
 
   test('drops undeclared fields', () => {
-    assert.deepEqual(penguins.parse({ ...valid, id: 7 }), valid)
+    assert.deepEqual(penguins.parse({ ...valid, id: 7 }), parsed)
   })
 
   test('treats undefined, null and NaN as missing in optional fields', () => {
@@ -115,11 +117,29 @@ describe('parse', () => {
     )
   })
 
-  test('reports invalid dates', () => {
+  test('converts timestamps to milliseconds since 1970', () => {
+    for (const observedAt of [
+      new Date('2007-11-10'),
+      1194652800000,
+      '2007-11-10',
+      '2007-11-10T00:00:00Z'
+    ]) {
+      assert.equal(
+        penguins.parse({ ...valid, observedAt }).observedAt,
+        1194652800000
+      )
+    }
+  })
+
+  test('reports invalid dates with the values received', () => {
     const [issue] = issuesOf(() =>
-      penguins.parse({ ...valid, observedAt: new Date('nope') })
+      penguins.parse({ ...valid, observedAt: '2007-02-30' })
     )
     assert.equal(issue?.code, 'invalid_timestamp')
+    assert.equal(
+      issue?.message,
+      "'observedAt' received dates that don't exist: '2007-02-30'"
+    )
   })
 
   test('reports records that are not objects', () => {
@@ -197,7 +217,7 @@ describe('Standard Schema', () => {
   })
 
   test('returns the value on success', () => {
-    assert.deepEqual(validate(valid), { value: valid })
+    assert.deepEqual(validate(valid), { value: parsed })
   })
 
   test('returns issues with a path on failure', () => {

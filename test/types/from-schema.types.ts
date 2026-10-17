@@ -62,7 +62,7 @@ type _overrides = Expect<
     {
       species: 'Adelie' | 'Gentoo'
       notes: 'calm' | 'agitated'
-      observedAt: Date
+      observedAt: number
     }
   >
 >

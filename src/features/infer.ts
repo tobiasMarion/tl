@@ -5,7 +5,8 @@ export type Shape = Readonly<Record<string, AnyField>>
 interface ValueByKind {
   number: number
   boolean: boolean
-  timestamp: Date
+  /** Milliseconds since 1970-01-01T00:00:00Z, like Date.getTime(). */
+  timestamp: number
 }
 
 export type FieldValue<Field extends AnyField> = Field extends {

@@ -1,6 +1,7 @@
 import { bold, cyan, dim, green, red, useColors, yellow } from '../colors.ts'
 import type { AnyField } from './fields.ts'
 import type { Shape } from './infer.ts'
+import { parseTimestamp } from './timestamp.ts'
 
 export type IssueCode =
   | 'invalid_record'
@@ -91,10 +92,7 @@ export const checkValue = (field: AnyField, value: unknown): Check => {
         ? { ok: true, value }
         : { ok: false, code: 'unknown_category' }
     case 'timestamp':
-      if (!(value instanceof Date)) return { ok: false, code: 'invalid_type' }
-      return Number.isNaN(value.getTime())
-        ? { ok: false, code: 'invalid_timestamp' }
-        : { ok: true, value }
+      return parseTimestamp(value)
   }
 }
 
@@ -126,7 +124,7 @@ const describeExpected = (field: AnyField): string => {
     case 'ordered-category':
       return `one of ${field.categories.map(formatValue).join(' < ')}`
     case 'timestamp':
-      return 'a Date'
+      return "a Date, milliseconds since 1970 or an ISO 8601 date such as '2025-01-31'"
   }
 }
 
@@ -187,7 +185,7 @@ const buildMessage = (
     case 'unknown_category':
       return `${name} received unknown categories${where}: ${samples}. Expected ${expected}`
     case 'invalid_timestamp':
-      return `${name} received invalid dates${where}`
+      return `${name} received dates that don't exist${where}: ${samples}`
     default:
       return `${name} expected ${expected}${where}, received ${samples}`
   }

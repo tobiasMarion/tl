@@ -16,14 +16,17 @@ import {
 
 describe('checkValue', () => {
   test('accepts valid values', () => {
-    const date = new Date('2007-11-10')
     assert.deepEqual(checkValue(number(), 39.1), { ok: true, value: 39.1 })
     assert.deepEqual(checkValue(boolean(), false), { ok: true, value: false })
     assert.deepEqual(checkValue(category(['a', 'b']), 'b'), {
       ok: true,
       value: 'b'
     })
-    assert.deepEqual(checkValue(timestamp(), date), { ok: true, value: date })
+    // Timestamps come out as milliseconds since 1970
+    assert.deepEqual(checkValue(timestamp(), new Date('2007-11-10')), {
+      ok: true,
+      value: 1194652800000
+    })
   })
 
   test('treats undefined, null and NaN as missing', () => {
@@ -45,7 +48,8 @@ describe('checkValue', () => {
       [number(), Number.POSITIVE_INFINITY],
       [boolean(), 'true'],
       [category(['a']), 1],
-      [timestamp(), '2007-11-10']
+      [timestamp(), '10/11/2007'],
+      [timestamp(), true]
     ] as const) {
       assert.deepEqual(checkValue(field, value), {
         ok: false,
@@ -71,10 +75,12 @@ describe('checkValue', () => {
   })
 
   test('rejects invalid dates', () => {
-    assert.deepEqual(checkValue(timestamp(), new Date('nope')), {
-      ok: false,
-      code: 'invalid_timestamp'
-    })
+    for (const value of [new Date('nope'), '2007-02-30']) {
+      assert.deepEqual(checkValue(timestamp(), value), {
+        ok: false,
+        code: 'invalid_timestamp'
+      })
+    }
   })
 })
 

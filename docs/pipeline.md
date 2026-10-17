@@ -69,3 +69,4 @@ If a step references a field that doesn't exist or has the wrong type (for examp
 - Synchronous or asynchronous `fit`.
 - Branching steps (the equivalent of `ColumnTransformer`).
 - `describe()`: the output format.
+- One method for walk-forward backtests and k-fold cross-validation, or one per kind of data.

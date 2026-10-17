@@ -51,7 +51,7 @@ const model = ml
   .estimator(ml.knn({ k: 5, distance: 'euclidean' }))
 
 const fitted = model.fit(train) // only accepts Train<F>
-fitted.evaluate(test, [ml.accuracy, ml.confusionMatrix]) // only accepts Test<F>
+fitted.evaluate(test, [ml.accuracy, ml.confusionMatrix]) // Validation<F> or Test<F>, never Train<F>
 
 fitted.predict({
   island: 'Biscoe',
@@ -101,13 +101,13 @@ prices.split({ test: 0.2, seed: 42 })
 | #  | Milestone                       | Deliverables |
 |----|---------------------------------|--------------|
 | M1 | **Feature DSL** ✅              | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests, Standard Schema support and `ml.fromSchema` for Zod/Valibot/ArkType schemas |
-| M2 | **Dataset, split, and validation** | `dataset` and `series`; random and chronological split; walk-forward (expanding/rolling window, gap); branded `Train`/`Test` |
+| M2 | **Dataset, split, and validation** | `dataset` and `series`; branded `Train`/`Validation`/`Test`; random split (seed, stratified) and chronological split (gap) into train/validation/test; k-fold and stratified k-fold; walk-forward (expanding/rolling window, gap); splits that compose for nested validation |
 | M3 | **Preprocessing**               | Imputation, one-hot encoding, standardization, lag and rolling features, target horizon; learned state kept separate from configuration |
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
 | M5 | **Pipeline, backtest, and metrics** | Typed composition, pending-decision checks, `fit`/`evaluate`/`predict`, `backtest` with refit per fold, MSE/MAE/R²/directional accuracy |
-| M6 | **Second algorithm (MVP)**      | Logistic regression or KNN; documentation and examples |
+| M6 | **Second algorithm (MVP)**      | Logistic regression or KNN; hyperparameter search with nested validation; documentation and examples |
 
-After the MVP: purged/embargoed cross-validation, decision trees, neural networks with backpropagation, ensembles, and optimized implementations behind the same public API.
+After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural networks with backpropagation, ensembles, and optimized implementations behind the same public API.
 
 ## Documentation
 
@@ -132,8 +132,8 @@ After the MVP: purged/embargoed cross-validation, decision trees, neural network
 │   ├── standard-schema.ts    # Standard Schema interfaces (copied from the spec)
 │   ├── colors.ts             # ANSI colors for terminal output
 │   ├── features/             # schema DSL, inference, runtime validation
-│   ├── dataset/              # dataset, series, Train/Test types
-│   ├── validation/           # split, walk-forward, backtest folds
+│   ├── dataset/              # dataset, series, Train/Validation/Test types
+│   ├── validation/           # split, k-fold, walk-forward, folds
 │   ├── preprocess/           # transformers (missing, encode, scale, lag, rolling)
 │   ├── pipeline/             # guided builder, fitted model, backtest
 │   ├── estimators/

@@ -11,6 +11,13 @@ import {
   repeatedTimesIssue,
   validateRows
 } from '../features/validate.ts'
+import {
+  type ChronologicalSplitOptions,
+  type ChronologicalSplitWithValidationOptions,
+  chronologicalSplit,
+  type TimestampInput
+} from './chronological.ts'
+import type { TrainTest, TrainValidationTest } from './split.ts'
 
 export type SeriesOptions<Time extends string, Group extends string> = {
   /** Required timestamp field that orders the rows. */
@@ -23,8 +30,8 @@ export type SeriesOptions<Time extends string, Group extends string> = {
 }
 
 // A type alias, not an interface: see Type quality in docs/principles.md.
-// It has no split yet: the chronological split comes with its own PR, and a
-// random split never exists on a series.
+// Its split cuts by time; a random split never exists on a series, since
+// shuffling time-ordered data leaks the future into training.
 export type Series<S extends Shape> = {
   readonly features: Features<S>
   /** Ordered by time; rows at the same time follow the group's category order. */
@@ -42,6 +49,18 @@ export type Series<S extends Shape> = {
       }[keyof S] &
         string)
     | undefined
+  /**
+   * Cuts by time: train, then validation from `validationFrom`, then test from
+   * `testFrom`, dropping `gap` before each held-out block.
+   */
+  split(
+    options: ChronologicalSplitWithValidationOptions
+  ): TrainValidationTest<S>
+  /**
+   * Cuts by time: train, then test from `testFrom`, dropping `gap` before the
+   * test block.
+   */
+  split(options: ChronologicalSplitOptions): TrainTest<S>
 }
 
 const isRequired = (field: AnyField | undefined, kind: AnyField['kind']) =>
@@ -159,5 +178,13 @@ export const series = <S extends Shape>(
     order.map(i => Object.freeze(records[i] as InferShape<S>))
   )
 
-  return Object.freeze({ features, rows: parsed, time, group })
+  // chronologicalSplit returns the union of both results; the cast hands the
+  // narrowing to the overloads on Series.split, as in ml.dataset.
+  const split = ((
+    options: ChronologicalSplitOptions & {
+      readonly validationFrom?: TimestampInput
+    }
+  ) => chronologicalSplit<S>(parsed, time, options)) as Series<S>['split']
+
+  return Object.freeze({ features, rows: parsed, time, group, split })
 }

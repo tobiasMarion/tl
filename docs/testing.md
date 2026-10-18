@@ -31,7 +31,8 @@ Some important negative cases:
 - `.estimator()` called with pending decisions;
 - an implementation option that doesn't apply to the chosen solver;
 - a metric that doesn't match the problem type;
-- a random split or k-fold on a `Series<F>`;
+- a random split of a `Series<F>`, or k-fold on its training block;
+- cross-validation of a `Validation<F>` or a `Test<F>`;
 - calling `split` on a block (`Train<F>`, `Validation<F>`, or `Test<F>`);
 - `stratify` on a field that isn't a category;
 - `lag`/`rolling` on a non-temporal `Dataset<F>`;

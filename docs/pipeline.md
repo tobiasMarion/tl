@@ -52,10 +52,10 @@ The error message has to name the pending field. The ergonomics of that message 
 
 ## Backtest
 
-On a `Series<F>`, `model.backtest(series, splitter)` runs the whole pipeline once per walk-forward fold:
+On the training block of a `Series<F>`, `model.backtest(train, cv)` runs the whole pipeline once per walk-forward fold:
 
 1. fits the transformers and the estimator on the fold's `Train<F>`;
-2. predicts the fold's `Test<F>`;
+2. predicts the fold's `Validation<F>`;
 3. stores the predictions and metrics for that fold.
 
 The result reports metrics per fold and aggregated, along with the out-of-sample predictions as a series. Nothing learned in one fold leaks into another.
@@ -69,4 +69,4 @@ If a step references a field that doesn't exist or has the wrong type (for examp
 - Synchronous or asynchronous `fit`.
 - Branching steps (the equivalent of `ColumnTransformer`).
 - `describe()`: the output format.
-- One method for walk-forward backtests and k-fold cross-validation, or one per kind of data.
+- One method for both kinds of cross-validation (walk-forward and k-fold), or one per kind of data.

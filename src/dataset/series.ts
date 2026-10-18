@@ -17,6 +17,7 @@ import {
   chronologicalSplit,
   type TimestampInput
 } from './chronological.ts'
+import { numberRows } from './roles.ts'
 import type { TrainTest, TrainValidationTest } from './split.ts'
 
 export type SeriesOptions<Time extends string, Group extends string> = {
@@ -177,6 +178,7 @@ export const series = <S extends Shape>(
   const parsed = Object.freeze(
     order.map(i => Object.freeze(records[i] as InferShape<S>))
   )
+  numberRows(parsed)
 
   // chronologicalSplit returns the union of both results; the cast hands the
   // narrowing to the overloads on Series.split, as in ml.dataset.

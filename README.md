@@ -121,6 +121,7 @@ prices.split({ test: 0.2, seed: 42 })
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
 | M5 | **Pipeline, backtest, and metrics** | Typed composition, pending-decision checks, `fit`/`evaluate`/`predict`, `backtest` with refit per fold, MSE/MAE/R²/directional accuracy |
 | M6 | **Second algorithm (MVP)**      | Logistic regression or KNN; hyperparameter search with cross-validation; documentation and examples |
+| M7 | **Ship it to production**       | Refit the validated pipeline on all the data (a `Train` with no `Validation` or `Test`, so the final model can't report a score); learned state frozen with the model and never recomputed at `predict`; saving and loading a fitted pipeline; runtime validation of production records |
 
 After the MVP: purged/embargoed k-fold, group k-fold and nested cross-validation, decision trees, neural networks with backpropagation, ensembles, and optimized implementations behind the same public API.
 

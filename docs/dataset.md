@@ -90,6 +90,8 @@ A single validation block is a single draw: with little data, a model can win on
 
 `ml.kFold` and `ml.walkForward` don't hold data: they describe how to cut a `Train<F>`, and are passed to what trains many times, the hyperparameter search and the backtest (see [Pipeline](pipeline.md#backtest)). The transformers and the estimator are refit on every fold, so nothing learned in one fold leaks into another. They don't create roles, so `split` stays the only way to separate data.
 
+`cv.folds(train)` returns a frozen array of folds, `readonly Fold<F, O>[]`, where each fold is `{ train: Train<F, O>; validation: Validation<F> }` and `O` is the origin of the training block (see below). The folds are computed when `folds` is called, every block carries the schema in `features` and its frozen `rows`, and the same `cv` and training block always give the same folds.
+
 Printing the folds draws them, so a cut can be checked by eye before anything trains on it: `console.log(cv.folds(train))` in Node, or `String(folds)` anywhere. k-fold draws one bar per fold with its sizes (and its classes, with `stratify`); walk-forward draws each fold on a timeline, with the training window, the gap and the validation block:
 
 ```
@@ -116,11 +118,14 @@ for (const fold of cv.folds(train)) {
 ```
 
 ```
-fold 1  [valid.][train ──────────────────────]
-fold 2  [train ][valid.][train ──────────────]
-fold 3  [train ────────][valid.][train ──────]
-...
+k-fold: 3 folds of 9 training rows, stratified by 'species', seed 42
+fold 1  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████████████████████████████████  6 train, 3 validation  Adelie 1, Chinstrap 1, Gentoo 1
+fold 2  ████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████████████████  6 train, 3 validation  Adelie 1, Chinstrap 1, Gentoo 1
+fold 3  ████████████████████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  6 train, 3 validation  Adelie 1, Chinstrap 1, Gentoo 1
+█ train  ▓ validation
 ```
+
+The held-out rows of a fold are spread over the training block; the bars draw them grouped by fold, as if fold 1 held out the first stretch, and the counts are the real ones.
 
 - Every row is held out exactly once. The shuffled rows are dealt to the folds in turn, so fold sizes differ by at most one.
 - **`stratify`:** keeps the proportion of each category in every fold: the shuffled rows are grouped by class before they are dealt, so each fold gets its share of each class, give or take one row. As in the random split, only required `category` and `orderedCategory` fields. `ml.kFold` is created before it meets data, so the field is checked when `folds` gets the training block: a wrong field is a type error there that lists the valid ones.
@@ -146,11 +151,16 @@ for (const fold of cv.folds(train)) {
 ```
 
 ```
-fold 1  [jan feb mar]·[apr]
-fold 2      [feb mar apr]·[may]
-fold 3          [mar apr may]·[jun]
-                           ^ gap
+walk-forward: 6 folds, expanding train, 6 months validation blocks, gap of 1 month
+        1949-01-01                            1959-11-01
+fold 1  ██████████████████████████████████░▓▓▓            train 1949-01-01..1956-11-01, validation 1957-01-01..1957-06-01
+fold 2  ████████████████████████████████████░▓▓▓          train 1949-01-01..1957-05-01, validation 1957-07-01..1957-12-01
+...
+fold 6  █████████████████████████████████████████████░▓▓  train 1949-01-01..1959-05-01, validation 1959-07-01..1959-11-01
+█ train  ▓ validation  ░ dropped by the gap
 ```
+
+Each column of the timeline is a stretch of time. A gap shorter than a column still gets one, so a fold with a gap never looks like a fold without one.
 
 - **`validationFrom`:** where the first validation block starts, like `testFrom` in the chronological split. Starting on the first of a month lines the blocks up with the calendar.
 - **`validation`:** the length of each validation block. The blocks follow each other until the end of the training block, without overlapping or leaving rows out; the last one can be shorter. A calendar block where the series has no rows, such as a month without data, is skipped.

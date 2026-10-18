@@ -4,6 +4,7 @@ import type {
   OrderedCategoryField
 } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
+import { describeKFold, printable } from './describe.ts'
 import { isSeed, MAX_SEED, shuffledIndices } from './random.ts'
 import { type Fold, type Train, trainBlock, validationBlock } from './roles.ts'
 import { isStratifiable } from './split.ts'
@@ -156,13 +157,26 @@ export const kFold = <K extends string = never>(
     // the split, so rows of the same class aren't grouped together.
     const rows = (f: number, held: boolean) =>
       train.rows.filter((_, i) => (fold[i] === f) === held) as InferShape<S>[]
-    return Object.freeze(
-      Array.from({ length: k }, (_, f) =>
-        Object.freeze({
-          train: trainBlock<S, 'dataset'>(train.features, rows(f, false)),
-          validation: validationBlock(train.features, rows(f, true))
-        })
-      )
+    const result = Array.from({ length: k }, (_, f) =>
+      Object.freeze({
+        train: trainBlock<S, 'dataset'>(train.features, rows(f, false)),
+        validation: validationBlock(train.features, rows(f, true))
+      })
+    )
+    return printable(result, () =>
+      describeKFold({
+        k,
+        seed,
+        stratify,
+        rows: train.rows.length,
+        fold,
+        classes:
+          stratify === undefined
+            ? undefined
+            : train.rows.map(
+                row => (row as Record<string, string>)[stratify] as string
+              )
+      })
     )
   }
 

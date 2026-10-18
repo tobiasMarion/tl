@@ -3,6 +3,7 @@ import type {
   ChronologicalSplitOptions,
   TimestampInput
 } from './chronological.ts'
+import { describeWalkForward, printable } from './describe.ts'
 import {
   checkPeriod,
   firstAtOrAfter,
@@ -178,7 +179,23 @@ export const walkForward = (options: WalkForwardOptions): WalkForward => {
         })
       )
     })
-    return Object.freeze(result)
+    const distinct = (block: { readonly rows: readonly unknown[] }) => [
+      ...new Set(
+        block.rows.map(row => (row as Record<string, number>)[time] as number)
+      )
+    ]
+    return printable(result, () =>
+      describeWalkForward({
+        train: window === undefined ? 'expanding' : window.label,
+        validation: validation.label,
+        gap: gap.label,
+        times: instants,
+        folds: result.map(fold => ({
+          train: distinct(fold.train),
+          validation: distinct(fold.validation)
+        }))
+      })
+    )
   }
 
   return Object.freeze({

@@ -90,6 +90,17 @@ A single validation block is a single draw: with little data, a model can win on
 
 `ml.kFold` and `ml.walkForward` don't hold data: they describe how to cut a `Train<F>`, and are passed to what trains many times, the hyperparameter search and the backtest (see [Pipeline](pipeline.md#backtest)). The transformers and the estimator are refit on every fold, so nothing learned in one fold leaks into another. They don't create roles, so `split` stays the only way to separate data.
 
+Printing the folds draws them, so a cut can be checked by eye before anything trains on it: `console.log(cv.folds(train))` in Node, or `String(folds)` anywhere. k-fold draws one bar per fold with its sizes (and its classes, with `stratify`); walk-forward draws each fold on a timeline, with the training window, the gap and the validation block:
+
+```
+walk-forward: 5 folds, rolling 3 years train, 1 year validation blocks, gap of 1 month
+        1949-01-01                            1959-11-01
+fold 1               ████████████░▓▓▓▓▓                   train 1952-01-01..1954-11-01, validation 1955-01-01..1955-12-01
+fold 2                   █████████████░▓▓▓▓▓              train 1953-01-01..1955-11-01, validation 1956-01-01..1956-12-01
+...
+█ train  ▓ validation  ░ dropped by the gap
+```
+
 The training block remembers where it came from: a `Train<F, 'dataset'>` accepts `kFold`, and a `Train<F, 'series'>` accepts only `walkForward`. `Train<F>` alone accepts both, for what doesn't depend on order, such as `fit`.
 
 ### k-fold

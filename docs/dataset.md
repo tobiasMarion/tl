@@ -92,6 +92,24 @@ A single validation block is a single draw: with little data, a model can win on
 
 `cv.folds(train)` returns a frozen array of folds, `readonly Fold<F, O>[]`, where each fold is `{ train: Train<F, O>; validation: Validation<F> }` and `O` is the origin of the training block (see below). The folds are computed when `folds` is called, every block carries the schema in `features` and its frozen `rows`, and the same `cv` and training block always give the same folds.
 
+Printing a block lists its rows as a table. The `#` column is the row's position in the dataset (or in the series, sorted by time), so the same row has the same number in every block and fold it lands in. A block of more than 16 rows shows its first 10 and last 5; `block.rows` has all of them. A fold prints its number and both of its blocks:
+
+```
+fold 1 of 3
+
+train: 6 rows
+ #  species    island     billLengthMm  billDepthMm  flipperLengthMm  bodyMassG  sex     bodyCondition
+10  Gentoo     Biscoe               50         16.3              230       5700  male    good
+ 4  Adelie     Torgersen          36.7         19.3              193       3450  female  fair
+...
+
+validation: 3 rows
+ #  species    island     billLengthMm  billDepthMm  flipperLengthMm  bodyMassG  sex     bodyCondition
+12  Gentoo     Biscoe               50         15.2              218       5700  male    good
+ 3  Adelie     Torgersen          null         null             null       null  null    fair
+ 5  Chinstrap  Dream              46.5         17.9              192       3500  female  fair
+```
+
 Printing the folds draws them, so a cut can be checked by eye before anything trains on it: `console.log(cv.folds(train))` in Node, or `String(folds)` anywhere. k-fold draws one bar per fold with its sizes (and its classes, with `stratify`); walk-forward draws each fold on a timeline, with the training window, the gap and the validation block:
 
 ```

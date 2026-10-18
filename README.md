@@ -99,7 +99,12 @@ const model = ml
 
 const report = model.backtest(
   train,
-  ml.walkForward({ train: 'expanding', validation: 21, step: 21, gap: { steps: 1 } })
+  ml.walkForward({
+    validationFrom: '2024-01-01',
+    validation: { months: 1 },
+    train: 'expanding',
+    gap: { steps: 1 }
+  })
 ) // @ts-expect-error — a random split on a time series is leakage
 prices.split({ test: 0.2, seed: 42 })
 ```

@@ -5,12 +5,7 @@ import type {
 } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { isSeed, MAX_SEED, shuffledIndices } from './random.ts'
-import {
-  type Train,
-  trainBlock,
-  type Validation,
-  validationBlock
-} from './roles.ts'
+import { type Fold, type Train, trainBlock, validationBlock } from './roles.ts'
 import { isStratifiable } from './split.ts'
 
 // Type aliases, not interfaces: see Type quality in docs/principles.md.
@@ -26,12 +21,6 @@ export type KFoldOptions<K extends string> = {
    * and ordered category fields of the training block.
    */
   readonly stratify?: K
-}
-
-/** One cut of a training block: fit on `train`, score on `validation`. */
-export type Fold<S extends Shape> = {
-  readonly train: Train<S, 'dataset'>
-  readonly validation: Validation<S>
 }
 
 export type KFold<K extends string> = {
@@ -56,7 +45,7 @@ export type KFold<K extends string> = {
         string
     >,
     train: Train<S, 'dataset'>
-  ): readonly Fold<S>[]
+  ): readonly Fold<S, 'dataset'>[]
 }
 
 // Quotes strings, so a JavaScript caller passing '5' sees why it was rejected.

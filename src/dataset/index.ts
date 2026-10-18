@@ -6,12 +6,11 @@ export type {
 } from './chronological.ts'
 export { type Dataset, dataset } from './dataset.ts'
 export {
-  type Fold,
   type KFold,
   type KFoldOptions,
   kFold
 } from './k-fold.ts'
-export type { Origin, Test, Train, Validation } from './roles.ts'
+export type { Fold, Origin, Test, Train, Validation } from './roles.ts'
 export { type Series, type SeriesOptions, series } from './series.ts'
 export type {
   RandomSplitOptions,
@@ -19,3 +18,8 @@ export type {
   TrainTest,
   TrainValidationTest
 } from './split.ts'
+export {
+  type WalkForward,
+  type WalkForwardOptions,
+  walkForward
+} from './walk-forward.ts'

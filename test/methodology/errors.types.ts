@@ -36,6 +36,12 @@ ml.kFold({ k: 5, seed: 42 }).folds(seriesTrain)
 // T4: no gap between train and test
 // @ts-expect-error — gap is required, even { steps: 0 }
 series.split({ testFrom: '2025-01-01' })
+// @ts-expect-error — walk-forward requires it too
+ml.walkForward({
+  validationFrom: 0,
+  validation: { months: 1 },
+  train: 'expanding'
+})
 
 // E1: a split that can't be repeated
 // @ts-expect-error — seed is required

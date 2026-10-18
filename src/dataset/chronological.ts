@@ -1,8 +1,7 @@
 import type { Features } from '../features/features.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
-import { parseTimestamp } from '../features/timestamp.ts'
-import { checkPeriod, type PeriodUnit, startBefore } from './period.ts'
-import { testBlock, trainBlock, validationBlock } from './roles.ts'
+import { checkPeriod, type PeriodUnit, startBefore, toTime } from './period.ts'
+import { seriesTrainBlock, testBlock, validationBlock } from './roles.ts'
 import type { TrainTest, TrainValidationTest } from './split.ts'
 
 /** A `Date`, milliseconds since 1970, or an ISO 8601 string, like `ml.timestamp()`. */
@@ -44,22 +43,7 @@ export type ChronologicalSplitWithValidationOptions =
     readonly validationFrom: TimestampInput
   }
 
-const show = (value: unknown) =>
-  typeof value === 'string'
-    ? `'${value}'`
-    : typeof value === 'object' && value !== null && !(value instanceof Date)
-      ? JSON.stringify(value)
-      : String(value)
-
 const iso = (time: number) => new Date(time).toISOString()
-
-const toTime = (name: string, value: unknown): number => {
-  const check = parseTimestamp(value)
-  if (check.ok) return check.value
-  throw new (check.code === 'invalid_type' ? TypeError : RangeError)(
-    `series.split(): ${name} expected a Date, milliseconds since 1970 or an ISO 8601 date such as '2025-01-31', received ${show(value)}`
-  )
-}
 
 // `rows` are sorted by `time` (ml.series sorts them), and every row has a
 // timestamp in milliseconds there. Validates the options at the entry point.
@@ -71,11 +55,11 @@ export const chronologicalSplit = <S extends Shape>(
     readonly validationFrom?: TimestampInput
   }
 ): TrainTest<S, 'series'> | TrainValidationTest<S, 'series'> => {
-  const testFrom = toTime('testFrom', options.testFrom)
+  const testFrom = toTime('series.split()', 'testFrom', options.testFrom)
   const validationFrom =
     options.validationFrom === undefined
       ? undefined
-      : toTime('validationFrom', options.validationFrom)
+      : toTime('series.split()', 'validationFrom', options.validationFrom)
   const gap = checkPeriod('series.split()', 'gap', options.gap, { zero: true })
   if (validationFrom !== undefined && validationFrom >= testFrom) {
     throw new RangeError(
@@ -135,7 +119,7 @@ export const chronologicalSplit = <S extends Shape>(
   }
 
   const blocks = {
-    train: trainBlock<S, 'series'>(features, train),
+    train: seriesTrainBlock(features, train, time),
     test: testBlock(features, test)
   }
   return validationFrom === undefined

@@ -36,6 +36,12 @@ export type Validation<S extends Shape> = {
   readonly [role]: 'validation'
 }
 
+/** One cut of a training block: fit on `train`, score on `validation`. */
+export type Fold<S extends Shape, O extends Origin = Origin> = {
+  readonly train: Train<S, O>
+  readonly validation: Validation<S>
+}
+
 // The roles and origins are type-only brands, so a frozen { features, rows }
 // is all a block needs at runtime. These casts are the one place where blocks
 // are created; the splits pass in a new array of rows in the order the block
@@ -47,6 +53,26 @@ export const trainBlock = <S extends Shape, O extends Origin>(
   features: Features<S>,
   rows: InferShape<S>[]
 ) => block(features, rows) as Train<S, O>
+
+// The time field of every training block cut from a series, which walk-forward
+// needs to cut it again. Kept out of the type, so Train stays a plain alias.
+const timeFields = new WeakMap<object, string>()
+
+export const seriesTrainBlock = <S extends Shape>(
+  features: Features<S>,
+  rows: InferShape<S>[],
+  time: string
+) => {
+  const train = trainBlock<S, 'series'>(features, rows)
+  timeFields.set(train, time)
+  return train
+}
+
+/** The time field of a series' training block, or undefined for any other value. */
+export const timeFieldOf = (block: unknown): string | undefined =>
+  typeof block === 'object' && block !== null
+    ? timeFields.get(block)
+    : undefined
 
 export const validationBlock = <S extends Shape>(
   features: Features<S>,

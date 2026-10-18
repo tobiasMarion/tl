@@ -1,4 +1,4 @@
-import { dataset, kFold, series } from './dataset/index.ts'
+import { dataset, kFold, series, walkForward } from './dataset/index.ts'
 import {
   boolean,
   category,
@@ -19,7 +19,8 @@ export const ml = Object.freeze({
   timestamp,
   dataset,
   series,
-  kFold
+  kFold,
+  walkForward
 })
 
 /** The record type described by a `Features` schema. */
@@ -43,7 +44,9 @@ export type {
   Train,
   TrainTest,
   TrainValidationTest,
-  Validation
+  Validation,
+  WalkForward,
+  WalkForwardOptions
 } from './dataset/index.ts'
 export type {
   AnyField,

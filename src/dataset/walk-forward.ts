@@ -13,9 +13,11 @@ import {
 } from './period.ts'
 import {
   type Fold,
+  fold,
   seriesTrainBlock,
   type Train,
   timeFieldOf,
+  type Validation,
   validationBlock
 } from './roles.ts'
 
@@ -149,7 +151,7 @@ export const walkForward = (options: WalkForwardOptions): WalkForward => {
       )
     }
 
-    const result: Fold<S, 'series'>[] = []
+    const blocks: [Train<S, 'series'>, Validation<S>][] = []
     starts.forEach((start, i) => {
       const end = starts[i + 1] ?? Number.POSITIVE_INFINITY
       const from =
@@ -172,13 +174,15 @@ export const walkForward = (options: WalkForwardOptions): WalkForward => {
           `walkForward.folds(): no rows left for training before ${iso(start)} after a gap of ${gap.label}; ${span}`
         )
       }
-      result.push(
-        Object.freeze({
-          train: seriesTrainBlock(train.features, fit, time),
-          validation: validationBlock(train.features, held)
-        })
-      )
+      blocks.push([
+        seriesTrainBlock(train.features, fit, time),
+        validationBlock(train.features, held)
+      ])
     })
+    // Skipped blocks leave the number of folds known only at the end
+    const result = blocks.map(([fit, held], f) =>
+      fold(fit, held, f, blocks.length)
+    )
     const distinct = (block: { readonly rows: readonly unknown[] }) => [
       ...new Set(
         block.rows.map(row => (row as Record<string, number>)[time] as number)
@@ -190,9 +194,9 @@ export const walkForward = (options: WalkForwardOptions): WalkForward => {
         validation: validation.label,
         gap: gap.label,
         times: instants,
-        folds: result.map(fold => ({
-          train: distinct(fold.train),
-          validation: distinct(fold.validation)
+        folds: result.map(each => ({
+          train: distinct(each.train),
+          validation: distinct(each.validation)
         }))
       })
     )

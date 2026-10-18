@@ -6,7 +6,13 @@ import type {
 import type { InferShape, Shape } from '../features/infer.ts'
 import { describeKFold, printable } from './describe.ts'
 import { isSeed, MAX_SEED, shuffledIndices } from './random.ts'
-import { type Fold, type Train, trainBlock, validationBlock } from './roles.ts'
+import {
+  type Fold,
+  fold,
+  type Train,
+  trainBlock,
+  validationBlock
+} from './roles.ts'
 import { isStratifiable } from './split.ts'
 
 // Type aliases, not interfaces: see Type quality in docs/principles.md.
@@ -151,17 +157,21 @@ export const kFold = <K extends string = never>(
       )
     }
     if (stratify !== undefined) checkStratify(train, stratify, k)
-    const fold = assignFolds(train, k, seed, stratify)
+    const assigned = assignFolds(train, k, seed, stratify)
 
     // Both blocks keep the order of the training block. It was shuffled by
     // the split, so rows of the same class aren't grouped together.
     const rows = (f: number, held: boolean) =>
-      train.rows.filter((_, i) => (fold[i] === f) === held) as InferShape<S>[]
+      train.rows.filter(
+        (_, i) => (assigned[i] === f) === held
+      ) as InferShape<S>[]
     const result = Array.from({ length: k }, (_, f) =>
-      Object.freeze({
-        train: trainBlock<S, 'dataset'>(train.features, rows(f, false)),
-        validation: validationBlock(train.features, rows(f, true))
-      })
+      fold(
+        trainBlock<S, 'dataset'>(train.features, rows(f, false)),
+        validationBlock(train.features, rows(f, true)),
+        f,
+        k
+      )
     )
     return printable(result, () =>
       describeKFold({
@@ -169,7 +179,7 @@ export const kFold = <K extends string = never>(
         seed,
         stratify,
         rows: train.rows.length,
-        fold,
+        fold: assigned,
         classes:
           stratify === undefined
             ? undefined

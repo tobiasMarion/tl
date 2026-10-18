@@ -1,0 +1,578 @@
+[
+  {
+    "month": "1949-01-01",
+    "passengers": 112
+  },
+  {
+    "month": "1949-02-01",
+    "passengers": 118
+  },
+  {
+    "month": "1949-03-01",
+    "passengers": 132
+  },
+  {
+    "month": "1949-04-01",
+    "passengers": 129
+  },
+  {
+    "month": "1949-05-01",
+    "passengers": 121
+  },
+  {
+    "month": "1949-06-01",
+    "passengers": 135
+  },
+  {
+    "month": "1949-07-01",
+    "passengers": 148
+  },
+  {
+    "month": "1949-08-01",
+    "passengers": 148
+  },
+  {
+    "month": "1949-09-01",
+    "passengers": 136
+  },
+  {
+    "month": "1949-10-01",
+    "passengers": 119
+  },
+  {
+    "month": "1949-11-01",
+    "passengers": 104
+  },
+  {
+    "month": "1949-12-01",
+    "passengers": 118
+  },
+  {
+    "month": "1950-01-01",
+    "passengers": 115
+  },
+  {
+    "month": "1950-02-01",
+    "passengers": 126
+  },
+  {
+    "month": "1950-03-01",
+    "passengers": 141
+  },
+  {
+    "month": "1950-04-01",
+    "passengers": 135
+  },
+  {
+    "month": "1950-05-01",
+    "passengers": 125
+  },
+  {
+    "month": "1950-06-01",
+    "passengers": 149
+  },
+  {
+    "month": "1950-07-01",
+    "passengers": 170
+  },
+  {
+    "month": "1950-08-01",
+    "passengers": 170
+  },
+  {
+    "month": "1950-09-01",
+    "passengers": 158
+  },
+  {
+    "month": "1950-10-01",
+    "passengers": 133
+  },
+  {
+    "month": "1950-11-01",
+    "passengers": 114
+  },
+  {
+    "month": "1950-12-01",
+    "passengers": 140
+  },
+  {
+    "month": "1951-01-01",
+    "passengers": 145
+  },
+  {
+    "month": "1951-02-01",
+    "passengers": 150
+  },
+  {
+    "month": "1951-03-01",
+    "passengers": 178
+  },
+  {
+    "month": "1951-04-01",
+    "passengers": 163
+  },
+  {
+    "month": "1951-05-01",
+    "passengers": 172
+  },
+  {
+    "month": "1951-06-01",
+    "passengers": 178
+  },
+  {
+    "month": "1951-07-01",
+    "passengers": 199
+  },
+  {
+    "month": "1951-08-01",
+    "passengers": 199
+  },
+  {
+    "month": "1951-09-01",
+    "passengers": 184
+  },
+  {
+    "month": "1951-10-01",
+    "passengers": 162
+  },
+  {
+    "month": "1951-11-01",
+    "passengers": 146
+  },
+  {
+    "month": "1951-12-01",
+    "passengers": 166
+  },
+  {
+    "month": "1952-01-01",
+    "passengers": 171
+  },
+  {
+    "month": "1952-02-01",
+    "passengers": 180
+  },
+  {
+    "month": "1952-03-01",
+    "passengers": 193
+  },
+  {
+    "month": "1952-04-01",
+    "passengers": 181
+  },
+  {
+    "month": "1952-05-01",
+    "passengers": 183
+  },
+  {
+    "month": "1952-06-01",
+    "passengers": 218
+  },
+  {
+    "month": "1952-07-01",
+    "passengers": 230
+  },
+  {
+    "month": "1952-08-01",
+    "passengers": 242
+  },
+  {
+    "month": "1952-09-01",
+    "passengers": 209
+  },
+  {
+    "month": "1952-10-01",
+    "passengers": 191
+  },
+  {
+    "month": "1952-11-01",
+    "passengers": 172
+  },
+  {
+    "month": "1952-12-01",
+    "passengers": 194
+  },
+  {
+    "month": "1953-01-01",
+    "passengers": 196
+  },
+  {
+    "month": "1953-02-01",
+    "passengers": 196
+  },
+  {
+    "month": "1953-03-01",
+    "passengers": 236
+  },
+  {
+    "month": "1953-04-01",
+    "passengers": 235
+  },
+  {
+    "month": "1953-05-01",
+    "passengers": 229
+  },
+  {
+    "month": "1953-06-01",
+    "passengers": 243
+  },
+  {
+    "month": "1953-07-01",
+    "passengers": 264
+  },
+  {
+    "month": "1953-08-01",
+    "passengers": 272
+  },
+  {
+    "month": "1953-09-01",
+    "passengers": 237
+  },
+  {
+    "month": "1953-10-01",
+    "passengers": 211
+  },
+  {
+    "month": "1953-11-01",
+    "passengers": 180
+  },
+  {
+    "month": "1953-12-01",
+    "passengers": 201
+  },
+  {
+    "month": "1954-01-01",
+    "passengers": 204
+  },
+  {
+    "month": "1954-02-01",
+    "passengers": 188
+  },
+  {
+    "month": "1954-03-01",
+    "passengers": 235
+  },
+  {
+    "month": "1954-04-01",
+    "passengers": 227
+  },
+  {
+    "month": "1954-05-01",
+    "passengers": 234
+  },
+  {
+    "month": "1954-06-01",
+    "passengers": 264
+  },
+  {
+    "month": "1954-07-01",
+    "passengers": 302
+  },
+  {
+    "month": "1954-08-01",
+    "passengers": 293
+  },
+  {
+    "month": "1954-09-01",
+    "passengers": 259
+  },
+  {
+    "month": "1954-10-01",
+    "passengers": 229
+  },
+  {
+    "month": "1954-11-01",
+    "passengers": 203
+  },
+  {
+    "month": "1954-12-01",
+    "passengers": 229
+  },
+  {
+    "month": "1955-01-01",
+    "passengers": 242
+  },
+  {
+    "month": "1955-02-01",
+    "passengers": 233
+  },
+  {
+    "month": "1955-03-01",
+    "passengers": 267
+  },
+  {
+    "month": "1955-04-01",
+    "passengers": 269
+  },
+  {
+    "month": "1955-05-01",
+    "passengers": 270
+  },
+  {
+    "month": "1955-06-01",
+    "passengers": 315
+  },
+  {
+    "month": "1955-07-01",
+    "passengers": 364
+  },
+  {
+    "month": "1955-08-01",
+    "passengers": 347
+  },
+  {
+    "month": "1955-09-01",
+    "passengers": 312
+  },
+  {
+    "month": "1955-10-01",
+    "passengers": 274
+  },
+  {
+    "month": "1955-11-01",
+    "passengers": 237
+  },
+  {
+    "month": "1955-12-01",
+    "passengers": 278
+  },
+  {
+    "month": "1956-01-01",
+    "passengers": 284
+  },
+  {
+    "month": "1956-02-01",
+    "passengers": 277
+  },
+  {
+    "month": "1956-03-01",
+    "passengers": 317
+  },
+  {
+    "month": "1956-04-01",
+    "passengers": 313
+  },
+  {
+    "month": "1956-05-01",
+    "passengers": 318
+  },
+  {
+    "month": "1956-06-01",
+    "passengers": 374
+  },
+  {
+    "month": "1956-07-01",
+    "passengers": 413
+  },
+  {
+    "month": "1956-08-01",
+    "passengers": 405
+  },
+  {
+    "month": "1956-09-01",
+    "passengers": 355
+  },
+  {
+    "month": "1956-10-01",
+    "passengers": 306
+  },
+  {
+    "month": "1956-11-01",
+    "passengers": 271
+  },
+  {
+    "month": "1956-12-01",
+    "passengers": 306
+  },
+  {
+    "month": "1957-01-01",
+    "passengers": 315
+  },
+  {
+    "month": "1957-02-01",
+    "passengers": 301
+  },
+  {
+    "month": "1957-03-01",
+    "passengers": 356
+  },
+  {
+    "month": "1957-04-01",
+    "passengers": 348
+  },
+  {
+    "month": "1957-05-01",
+    "passengers": 355
+  },
+  {
+    "month": "1957-06-01",
+    "passengers": 422
+  },
+  {
+    "month": "1957-07-01",
+    "passengers": 465
+  },
+  {
+    "month": "1957-08-01",
+    "passengers": 467
+  },
+  {
+    "month": "1957-09-01",
+    "passengers": 404
+  },
+  {
+    "month": "1957-10-01",
+    "passengers": 347
+  },
+  {
+    "month": "1957-11-01",
+    "passengers": 305
+  },
+  {
+    "month": "1957-12-01",
+    "passengers": 336
+  },
+  {
+    "month": "1958-01-01",
+    "passengers": 340
+  },
+  {
+    "month": "1958-02-01",
+    "passengers": 318
+  },
+  {
+    "month": "1958-03-01",
+    "passengers": 362
+  },
+  {
+    "month": "1958-04-01",
+    "passengers": 348
+  },
+  {
+    "month": "1958-05-01",
+    "passengers": 363
+  },
+  {
+    "month": "1958-06-01",
+    "passengers": 435
+  },
+  {
+    "month": "1958-07-01",
+    "passengers": 491
+  },
+  {
+    "month": "1958-08-01",
+    "passengers": 505
+  },
+  {
+    "month": "1958-09-01",
+    "passengers": 404
+  },
+  {
+    "month": "1958-10-01",
+    "passengers": 359
+  },
+  {
+    "month": "1958-11-01",
+    "passengers": 310
+  },
+  {
+    "month": "1958-12-01",
+    "passengers": 337
+  },
+  {
+    "month": "1959-01-01",
+    "passengers": 360
+  },
+  {
+    "month": "1959-02-01",
+    "passengers": 342
+  },
+  {
+    "month": "1959-03-01",
+    "passengers": 406
+  },
+  {
+    "month": "1959-04-01",
+    "passengers": 396
+  },
+  {
+    "month": "1959-05-01",
+    "passengers": 420
+  },
+  {
+    "month": "1959-06-01",
+    "passengers": 472
+  },
+  {
+    "month": "1959-07-01",
+    "passengers": 548
+  },
+  {
+    "month": "1959-08-01",
+    "passengers": 559
+  },
+  {
+    "month": "1959-09-01",
+    "passengers": 463
+  },
+  {
+    "month": "1959-10-01",
+    "passengers": 407
+  },
+  {
+    "month": "1959-11-01",
+    "passengers": 362
+  },
+  {
+    "month": "1959-12-01",
+    "passengers": 405
+  },
+  {
+    "month": "1960-01-01",
+    "passengers": 417
+  },
+  {
+    "month": "1960-02-01",
+    "passengers": 391
+  },
+  {
+    "month": "1960-03-01",
+    "passengers": 419
+  },
+  {
+    "month": "1960-04-01",
+    "passengers": 461
+  },
+  {
+    "month": "1960-05-01",
+    "passengers": 472
+  },
+  {
+    "month": "1960-06-01",
+    "passengers": 535
+  },
+  {
+    "month": "1960-07-01",
+    "passengers": 622
+  },
+  {
+    "month": "1960-08-01",
+    "passengers": 606
+  },
+  {
+    "month": "1960-09-01",
+    "passengers": 508
+  },
+  {
+    "month": "1960-10-01",
+    "passengers": 461
+  },
+  {
+    "month": "1960-11-01",
+    "passengers": 390
+  },
+  {
+    "month": "1960-12-01",
+    "passengers": 432
+  }
+]

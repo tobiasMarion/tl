@@ -26,4 +26,4 @@ jobs:
       - run: npm run check
       - run: npm run build
       - run: npm run example
-      - run: npm run example:diamonds
+      - run: npm run example:air-passengers

@@ -32,6 +32,17 @@ describe('blockSize', () => {
 })
 
 describe('dataset.split', () => {
+  test('gives every block the schema', () => {
+    const { train, validation, test } = data.split({
+      validation: 0.2,
+      test: 0.2,
+      seed: 42
+    })
+    for (const block of [train, validation, test]) {
+      assert.equal(block.features, points)
+    }
+  })
+
   test('holds out the test fraction, rounded up', () => {
     const { train, test } = data.split({ test: 0.25, seed: 42 })
     assert.equal(test.rows.length, 3)

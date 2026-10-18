@@ -40,7 +40,7 @@ const entry: Penguin = penguins.parse({
 })
 console.log(entry)
 
-// ── M2: Dataset and split ────────────────────────────────────────────────────
+// ── M2: Dataset, split and cross-validation ──────────────────────────────────
 
 // The entry point for training rows: validated once, here.
 const data = ml.dataset(penguins, rows)
@@ -55,6 +55,16 @@ const { train, validation, test } = data.split({
 console.log(
   `${train.rows.length} for training, ${validation.rows.length} for validation, ${test.rows.length} for testing`
 )
+
+// Cross-validation resamples only the training block: each fold holds out a
+// different part of it, and the test block stays out of every fold.
+const cv = ml.kFold({ k: 3, seed: 42, stratify: 'species' })
+cv.folds(train).forEach((fold, i) => {
+  const species = fold.validation.rows.map(row => row.species).join(', ')
+  console.log(
+    `fold ${i + 1}: ${fold.train.rows.length} to train, ${fold.validation.rows.length} to validate (${species})`
+  )
+})
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
 // ── M5: Pipeline and metrics ─────────────────────────────────────────────────

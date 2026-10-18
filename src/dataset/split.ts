@@ -6,8 +6,9 @@ import type {
 } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { allocate } from './allocate.ts'
-import { shuffledIndices } from './random.ts'
+import { isSeed, MAX_SEED, shuffledIndices } from './random.ts'
 import {
+  type Origin,
   type Test,
   type Train,
   testBlock,
@@ -46,12 +47,16 @@ export type RandomSplitWithValidationOptions<K extends string> =
     readonly validation: number
   }
 
-export type TrainTest<S extends Shape> = {
-  readonly train: Train<S>
+/** The blocks of a split. `O` is what the training block was cut from. */
+export type TrainTest<S extends Shape, O extends Origin = Origin> = {
+  readonly train: Train<S, O>
   readonly test: Test<S>
 }
 
-export type TrainValidationTest<S extends Shape> = TrainTest<S> & {
+export type TrainValidationTest<
+  S extends Shape,
+  O extends Origin = Origin
+> = TrainTest<S, O> & {
   readonly validation: Validation<S>
 }
 
@@ -61,8 +66,6 @@ export type TrainValidationTest<S extends Shape> = TrainTest<S> & {
 // error while staying far below 1 for any realistic row count.
 export const blockSize = (n: number, fraction: number): number =>
   Math.ceil(n * fraction * (1 - 1e-12))
-
-const MAX_SEED = 0xffffffff
 
 // Quotes strings, so a JavaScript caller passing '0.2' sees why it was rejected.
 const show = (value: unknown) =>
@@ -78,9 +81,7 @@ const checkFraction = (name: string, value: number) => {
   }
 }
 
-// Validates the options at the entry point, so randomSplit can trust them. The
-// seed has to be a uint32: seededRandom keeps only 32 bits, so any other number
-// would silently become a different seed.
+// Validates the options at the entry point, so randomSplit can trust them.
 const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   if (n === 0) throw new RangeError('dataset.split(): the dataset has no rows')
 
@@ -95,7 +96,7 @@ const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   }
 
   const { seed } = options
-  if (!(Number.isInteger(seed) && seed >= 0 && seed <= MAX_SEED)) {
+  if (!isSeed(seed)) {
     throw new RangeError(
       `dataset.split(): seed must be an integer from 0 to ${MAX_SEED}, such as 42, received ${show(seed)}`
     )
@@ -113,7 +114,8 @@ const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   }
 }
 
-const isStratifiable = (field: AnyField | undefined) =>
+/** A required category or ordered category: the fields stratify accepts. */
+export const isStratifiable = (field: AnyField | undefined) =>
   field !== undefined &&
   (field.kind === 'category' || field.kind === 'ordered-category') &&
   !field.isOptional
@@ -222,7 +224,7 @@ export const randomSplit = <S extends Shape>(
   features: Features<S>,
   rows: readonly InferShape<S>[],
   options: SplitOptions<S>
-): TrainTest<S> | TrainValidationTest<S> => {
+): TrainTest<S, 'dataset'> | TrainValidationTest<S, 'dataset'> => {
   checkOptions(rows.length, options)
   checkStratify(features, rows, options)
   const shuffled = shuffledIndices(rows.length, options.seed)
@@ -253,9 +255,9 @@ export const randomSplit = <S extends Shape>(
   const pick = (role: Role) =>
     shuffled.filter(i => roles[i] === role).map(i => rows[i] as InferShape<S>)
 
-  const test = testBlock(pick('test'))
-  const train = trainBlock(pick('train'))
+  const test = testBlock(features, pick('test'))
+  const train = trainBlock<S, 'dataset'>(features, pick('train'))
   if (options.validation === undefined) return Object.freeze({ train, test })
-  const validation = validationBlock(pick('validation'))
+  const validation = validationBlock(features, pick('validation'))
   return Object.freeze({ train, validation, test })
 }

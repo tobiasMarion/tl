@@ -12,6 +12,15 @@ export const seededRandom = (seed: number): (() => number) => {
   }
 }
 
+/** The largest seed: seededRandom keeps only 32 bits. */
+export const MAX_SEED = 0xffffffff
+
+// Any other number would silently become a different seed
+export const isSeed = (value: unknown): value is number =>
+  Number.isInteger(value) &&
+  (value as number) >= 0 &&
+  (value as number) <= MAX_SEED
+
 // Fisher–Yates over 0..n-1. Shuffles indices instead of rows so callers can
 // cut the same permutation into blocks without copying records.
 export const shuffledIndices = (n: number, seed: number): number[] => {

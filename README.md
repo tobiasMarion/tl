@@ -88,6 +88,7 @@ const priceFeatures = ml.features({
 })
 
 const prices = ml.series(priceFeatures, rows, { time: 'date', group: 'ticker' })
+const { train, test } = prices.split({ testFrom: '2025-01-01', gap: { steps: 1 } })
 
 const model = ml
   .pipeline(prices)
@@ -97,8 +98,8 @@ const model = ml
   .estimator(ml.linearRegression({ solver: 'normal-equation' }))
 
 const report = model.backtest(
-  prices,
-  ml.walkForward({ train: 'expanding', test: 21, step: 21, gap: { steps: 1 } })
+  train,
+  ml.walkForward({ train: 'expanding', validation: 21, step: 21, gap: { steps: 1 } })
 ) // @ts-expect-error — a random split on a time series is leakage
 prices.split({ test: 0.2, seed: 42 })
 ```
@@ -110,13 +111,13 @@ prices.split({ test: 0.2, seed: 42 })
 | #  | Milestone                       | Deliverables |
 |----|---------------------------------|--------------|
 | M1 | **Feature DSL** ✅              | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests, Standard Schema support and `ml.fromSchema` for Zod/Valibot/ArkType schemas |
-| M2 | **Dataset, split, and validation** | `dataset` and `series`; branded `Train`/`Validation`/`Test`; random split (seed, stratified) and chronological split (gap) into train/validation/test; k-fold and stratified k-fold; walk-forward (expanding/rolling window, gap); splits that compose for nested validation |
+| M2 | **Dataset, split, and validation** | `dataset` and `series`; branded `Train`/`Validation`/`Test`; random split (seed, stratified) and chronological split (gap) into train/validation/test; cross-validation of the training block: k-fold, stratified k-fold, and walk-forward (expanding/rolling window, gap) |
 | M3 | **Preprocessing**               | Imputation, one-hot encoding, standardization, lag and rolling features, target horizon; learned state kept separate from configuration |
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
 | M5 | **Pipeline, backtest, and metrics** | Typed composition, pending-decision checks, `fit`/`evaluate`/`predict`, `backtest` with refit per fold, MSE/MAE/R²/directional accuracy |
-| M6 | **Second algorithm (MVP)**      | Logistic regression or KNN; hyperparameter search with nested validation; documentation and examples |
+| M6 | **Second algorithm (MVP)**      | Logistic regression or KNN; hyperparameter search with cross-validation; documentation and examples |
 
-After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural networks with backpropagation, ensembles, and optimized implementations behind the same public API.
+After the MVP: purged/embargoed k-fold, group k-fold and nested cross-validation, decision trees, neural networks with backpropagation, ensembles, and optimized implementations behind the same public API.
 
 ## Documentation
 
@@ -125,7 +126,7 @@ After the MVP: purged/embargoed k-fold and group k-fold, decision trees, neural 
 | [Methodological errors](docs/methodology.md) | The errors TL tries to prevent, and the status of each one |
 | [Design principles](docs/principles.md) | Explicit decisions, time series from the start, static + runtime typing |
 | [Feature DSL](docs/features.md) | Field types, inference, validation, Zod compatibility through Standard Schema |
-| [Dataset and validation](docs/dataset.md) | Splits, walk-forward, branded types, leakage prevention |
+| [Dataset and validation](docs/dataset.md) | Splits, cross-validation, branded types, leakage prevention |
 | [Preprocessing](docs/preprocessing.md) | Transformers, temporal features, missing values and unknown categories |
 | [Pipeline](docs/pipeline.md) | Guided workflow, configured vs. fitted model, pending decisions, backtest |
 | [Estimators](docs/estimators.md) | Estimator/Predictor contracts, multiple implementations |
@@ -152,7 +153,7 @@ Changes reach `main` only through pull requests. CI runs `check`, the build, and
 │   ├── colors.ts             # ANSI colors for terminal output
 │   ├── features/             # schema DSL, inference, runtime validation
 │   ├── dataset/              # dataset, series, Train/Validation/Test types
-│   ├── validation/           # split, k-fold, walk-forward, folds
+│   ├── validation/           # cross-validation: k-fold, walk-forward
 │   ├── preprocess/           # transformers (missing, encode, scale, lag, rolling)
 │   ├── pipeline/             # guided builder, fitted model, backtest
 │   ├── estimators/

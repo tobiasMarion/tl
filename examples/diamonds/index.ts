@@ -38,10 +38,28 @@ type Diamond = typeof diamonds.infer
 const records: Diamond[] = diamonds.parseRows(rows)
 console.log(`${records.length} valid diamonds`)
 
-// ── M2: Dataset and split ────────────────────────────────────────────────────
+// ── M2: Dataset, split and cross-validation ──────────────────────────────────
 
-// const data = ml.dataset(diamonds, rows)
-// const { train, test } = data.split({ test: 0.2, seed: 42 })
+const data = ml.dataset(diamonds, rows)
+const { train, test } = data.split({ test: 0.2, seed: 42 })
+console.log(
+  `${train.rows.length} for training, ${test.rows.length} for testing`
+)
+
+// The mean price of each validation block: folds are cut at random, so they
+// should land close to each other and to the mean of the training block.
+const meanPrice = (block: { readonly rows: readonly Diamond[] }) =>
+  Math.round(
+    block.rows.reduce((sum, row) => sum + row.price, 0) / block.rows.length
+  )
+console.log(`mean price in training: ${meanPrice(train)}`)
+ml.kFold({ k: 4, seed: 42 })
+  .folds(train)
+  .forEach((fold, i) => {
+    console.log(
+      `fold ${i + 1}: ${fold.validation.rows.length} to validate, mean price ${meanPrice(fold.validation)}`
+    )
+  })
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
 // ── M4: Linear regression ────────────────────────────────────────────────────

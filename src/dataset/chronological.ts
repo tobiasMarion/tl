@@ -1,3 +1,4 @@
+import type { Features } from '../features/features.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { parseTimestamp } from '../features/timestamp.ts'
 import { testBlock, trainBlock, validationBlock } from './roles.ts'
@@ -145,12 +146,13 @@ const firstAtOrAfter = (sorted: readonly number[], target: number): number => {
 // `rows` are sorted by `time` (ml.series sorts them), and every row has a
 // timestamp in milliseconds there. Validates the options at the entry point.
 export const chronologicalSplit = <S extends Shape>(
+  features: Features<S>,
   rows: readonly InferShape<S>[],
   time: string,
   options: ChronologicalSplitOptions & {
     readonly validationFrom?: TimestampInput
   }
-): TrainTest<S> | TrainValidationTest<S> => {
+): TrainTest<S, 'series'> | TrainValidationTest<S, 'series'> => {
   const testFrom = toTime('testFrom', options.testFrom)
   const validationFrom =
     options.validationFrom === undefined
@@ -217,8 +219,14 @@ export const chronologicalSplit = <S extends Shape>(
     )
   }
 
-  const blocks = { train: trainBlock<S>(train), test: testBlock<S>(test) }
+  const blocks = {
+    train: trainBlock<S, 'series'>(features, train),
+    test: testBlock(features, test)
+  }
   return validationFrom === undefined
     ? Object.freeze(blocks)
-    : Object.freeze({ ...blocks, validation: validationBlock<S>(validation) })
+    : Object.freeze({
+        ...blocks,
+        validation: validationBlock(features, validation)
+      })
 }

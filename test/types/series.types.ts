@@ -79,8 +79,9 @@ data.split({ testFrom: '2025-01-01', gap: { steps: 1, days: 5 } })
 // @ts-expect-error — a typo in the unit doesn't compile
 data.split({ testFrom: '2025-01-01', gap: { dayz: 5 } })
 
-// @ts-expect-error — months have no fixed length
+// Months and years follow the calendar
 data.split({ testFrom: '2025-01-01', gap: { months: 1 } })
+data.split({ testFrom: '2025-01-01', gap: { years: 1 } })
 
 // @ts-expect-error — validation only exists when it was asked for
 twoWay.validation

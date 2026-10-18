@@ -28,7 +28,7 @@ const utc = (
   return date.getTime()
 }
 
-const daysInMonth = (year: number, month: number): number =>
+export const daysInMonth = (year: number, month: number): number =>
   new Date(utc(year, month + 1, 0)).getUTCDate()
 
 // A string without an offset is read as UTC, so the same data gives the same

@@ -154,6 +154,64 @@ describe('series.split', () => {
   })
 })
 
+describe('series.split calendar gaps', () => {
+  // One row on the last day of each month of 2024, and a test block from
+  // Mar 31, 2025
+  const monthEnds = Array.from({ length: 12 }, (_, month) =>
+    new Date(Date.UTC(2024, month + 1, 0)).toISOString()
+  )
+  const monthly = ml.series(
+    prices,
+    [...monthEnds, '2025-03-31'].map((time, i) => ({
+      date: time,
+      ticker: 'AAPL',
+      close: i + 1
+    })),
+    { time: 'date' }
+  )
+
+  test('counts months on the calendar, clamped to the end of the month', () => {
+    // One month before Mar 31, 2025 is Feb 28, so Feb has no row in the
+    // series and Dec 31 is the last training row. Three months back is
+    // Dec 31: [Dec 31, Mar 31) drops Dec 31 itself
+    const oneMonth = monthly.split({
+      testFrom: '2025-03-31',
+      gap: { months: 1 }
+    })
+    assert.equal(closes(oneMonth.train).at(-1), 12)
+    const threeMonths = monthly.split({
+      testFrom: '2025-03-31',
+      gap: { months: 3 }
+    })
+    assert.equal(closes(threeMonths.train).at(-1), 11)
+  })
+
+  test('counts a year as twelve months', () => {
+    // [Mar 31, 2024, Mar 31, 2025) drops every month end from March on
+    const { train } = monthly.split({
+      testFrom: '2025-03-31',
+      gap: { years: 1 }
+    })
+    assert.deepEqual(closes(train), [1, 2])
+  })
+
+  test('clamps the 29th of February in a year without one', () => {
+    // One year before Feb 29, 2024 is Feb 28, 2023, not Mar 1, so Feb 28
+    // falls inside the gap
+    const leap = ml.series(
+      prices,
+      ['2023-02-27', '2023-02-28', '2024-02-29'].map((time, i) => ({
+        date: time,
+        ticker: 'AAPL',
+        close: i + 1
+      })),
+      { time: 'date' }
+    )
+    const { train } = leap.split({ testFrom: '2024-02-29', gap: { years: 1 } })
+    assert.deepEqual(closes(train), [1])
+  })
+})
+
 describe('series.split options', () => {
   const rejects = (
     options: object,
@@ -178,7 +236,7 @@ describe('series.split options', () => {
     const gapRejects = (gap: unknown, message: string) =>
       rejects({ testFrom: date(8), gap }, 'TypeError', message)
     const shapes =
-      'series.split(): gap takes one unit: { steps: n } or a duration such as { days: 5 } (weeks, days, hours, minutes, seconds, milliseconds)'
+      'series.split(): gap takes one unit: { steps: n } or a duration such as { days: 5 } (years, months, weeks, days, hours, minutes, seconds, milliseconds)'
     gapRejects(1, `${shapes}, received 1`)
     gapRejects(undefined, `${shapes}, received undefined`)
     gapRejects({}, `${shapes}, received {}`)
@@ -203,14 +261,12 @@ describe('series.split options', () => {
     )
   })
 
-  test('rejects months and years, which have no fixed length', () => {
-    for (const gap of [{ months: 1 }, { years: 1 }]) {
-      rejects(
-        { testFrom: date(8), gap },
-        'TypeError',
-        `series.split(): gap can't use months or years, which have no fixed length; use days or weeks, received ${JSON.stringify(gap)}`
-      )
-    }
+  test('rejects months and years that are not whole', () => {
+    rejects(
+      { testFrom: date(8), gap: { months: 1.5 } },
+      'TypeError',
+      'series.split(): gap months must be a whole number >= 0, received {"months":1.5}'
+    )
   })
 
   test('names the gap in messages', () => {

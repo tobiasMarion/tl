@@ -116,7 +116,7 @@ prices.split({ test: 0.2, seed: 42 })
 | #  | Milestone                       | Deliverables |
 |----|---------------------------------|--------------|
 | M1 | **Feature DSL** ✅              | Schema, `timestamp` fields, type inference, categories as literal unions, runtime validation, positive and negative type tests, Standard Schema support and `ml.fromSchema` for Zod/Valibot/ArkType schemas |
-| M2 | **Dataset, split, and validation** | `dataset` and `series`; branded `Train`/`Validation`/`Test`; random split (seed, stratified) and chronological split (gap) into train/validation/test; cross-validation of the training block: k-fold, stratified k-fold, and walk-forward (expanding/rolling window, gap) |
+| M2 | **Dataset, split, and validation** ✅ | `dataset` and `series`; branded `Train`/`Validation`/`Test`; random split (seed, stratified) and chronological split (gap) into train/validation/test; cross-validation of the training block: k-fold, stratified k-fold, and walk-forward (expanding/rolling window, gap) |
 | M3 | **Preprocessing**               | Imputation, one-hot encoding, standardization, lag and rolling features, target horizon; learned state kept separate from configuration |
 | M4 | **Linear regression**           | Prediction, MSE, gradients, gradient descent; comparison against the closed-form solution |
 | M5 | **Pipeline, backtest, and metrics** | Typed composition, pending-decision checks, `fit`/`evaluate`/`predict`, `backtest` with refit per fold, MSE/MAE/R²/directional accuracy |

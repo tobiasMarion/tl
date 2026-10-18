@@ -58,9 +58,12 @@ console.log(
 
 // Cross-validation resamples only the training block: each fold holds out a
 // different part of it, and the test block stays out of every fold.
-// Printing the folds draws them, with the species each one holds out.
+// Printing the folds draws them, with the species each one holds out; printing
+// a fold lists its rows, numbered by their position in the data.
 const cv = ml.kFold({ k: 3, seed: 42, stratify: 'species' })
-console.log(cv.folds(train))
+const folds = cv.folds(train)
+console.log(folds)
+console.log(folds[0])
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
 // ── M5: Pipeline and metrics ─────────────────────────────────────────────────

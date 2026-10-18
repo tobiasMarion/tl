@@ -51,6 +51,9 @@ const expanding = ml.walkForward({
 })
 console.log(`\n${expanding.folds(train)}`)
 
+// A fold lists the months it trains and validates on
+console.log(`\n${rolling.folds(train)[0]}`)
+
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
 // ── M4: Linear regression ────────────────────────────────────────────────────
 // ── M5: Pipeline, backtest and metrics ───────────────────────────────────────

@@ -155,16 +155,89 @@ export const describeWalkForward = (d: WalkForwardDescription): string => {
   return [bold(header), dim(axis), ...lines, legend(true)].join('\n')
 }
 
+// Blocks print their rows as a table. Long blocks keep their first and last
+// rows; block.rows has all of them.
+const HEAD = 10
+const TAIL = 5
+
+export type BlockDescription = {
+  readonly role: string
+  readonly fields: { readonly [key: string]: { readonly kind: string } }
+  readonly rows: readonly Record<string, unknown>[]
+  /** Position of a record in the dataset or series it came from. */
+  readonly position: (record: object) => number | undefined
+}
+
+// The # column is the row's position in the dataset or series, so the same row
+// has the same number in every block and fold it lands in.
+export const describeBlock = (d: BlockDescription): string => {
+  const total = d.rows.length
+  const header = bold(`${d.role}: ${total} ${total === 1 ? 'row' : 'rows'}`)
+  if (total === 0) return header
+  const shown =
+    total > HEAD + TAIL + 1
+      ? [...d.rows.slice(0, HEAD), undefined, ...d.rows.slice(-TAIL)]
+      : d.rows
+
+  const keys = Object.keys(d.fields)
+  const columns = keys.map(key => {
+    const kind = d.fields[key]?.kind
+    const values = d.rows.map(row => row[key])
+    const times = values.filter(value => typeof value === 'number')
+    const time = kind === 'timestamp' ? formatter(times) : undefined
+    return {
+      key,
+      right: kind === 'number' || kind === 'timestamp',
+      text: (value: unknown) =>
+        value === null || value === undefined
+          ? 'null'
+          : time !== undefined
+            ? time(value as number)
+            : String(value)
+    }
+  })
+
+  const cells = shown.map(row =>
+    row === undefined
+      ? undefined
+      : [
+          String(d.position(row) ?? '?'),
+          ...columns.map(column => column.text(row[column.key]))
+        ]
+  )
+  const titles = ['#', ...keys]
+  const widths = titles.map((title, c) =>
+    Math.max(title.length, ...cells.map(cell => cell?.[c]?.length ?? 0))
+  )
+  const right = [true, ...columns.map(column => column.right)]
+  const line = (cell: readonly string[], style = (text: string) => text) =>
+    cell
+      .map((text, c) => {
+        const width = widths[c] as number
+        const padded = right[c] ? text.padStart(width) : text.padEnd(width)
+        // Missing values stand out from the ones that were there
+        return c > 0 && text === 'null' ? dim(padded) : style(padded)
+      })
+      .join('  ')
+      .trimEnd()
+
+  const lines = cells.map(cell =>
+    cell === undefined ? dim(`… ${total - HEAD - TAIL} more rows`) : line(cell)
+  )
+  return [header, dim(line(titles)), ...lines].join('\n')
+}
+
 /**
- * Freezes the folds and lets them print as a diagram: through console.log in
- * Node, and through String(folds) anywhere.
+ * Freezes a value and lets it print its description: through console.log in
+ * Node, and through String(value) anywhere. The hooks aren't enumerable, so
+ * spreading, iterating and JSON.stringify see the value as it is.
  */
-export const printable = <T>(
-  folds: T[],
+export const printable = <T extends object>(
+  value: T,
   describe: () => string
-): readonly T[] => {
+): Readonly<T> => {
   for (const key of [Symbol.for('nodejs.util.inspect.custom'), 'toString']) {
-    Object.defineProperty(folds, key, { value: describe, enumerable: false })
+    Object.defineProperty(value, key, { value: describe, enumerable: false })
   }
-  return Object.freeze(folds)
+  return Object.freeze(value)
 }

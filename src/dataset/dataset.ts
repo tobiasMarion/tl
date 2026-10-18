@@ -2,6 +2,7 @@ import type { Features } from '../features/features.ts'
 import type { CategoryField, OrderedCategoryField } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { FeatureValidationError, validateRows } from '../features/validate.ts'
+import { numberRows } from './roles.ts'
 import {
   type CategoryKeys,
   type RandomSplitOptions,
@@ -64,6 +65,7 @@ export const dataset = <S extends Shape>(
   const parsed = Object.freeze(
     (values as InferShape<S>[]).map(record => Object.freeze(record))
   )
+  numberRows(parsed)
 
   // randomSplit returns the union of both results; the cast hands the narrowing
   // to the overloads on Dataset.split, which match what randomSplit returns.

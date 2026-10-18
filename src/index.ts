@@ -1,4 +1,4 @@
-import { dataset, series } from './dataset/index.ts'
+import { dataset, kFold, series } from './dataset/index.ts'
 import {
   boolean,
   category,
@@ -18,7 +18,8 @@ export const ml = Object.freeze({
   orderedCategory,
   timestamp,
   dataset,
-  series
+  series,
+  kFold
 })
 
 /** The record type described by a `Features` schema. */
@@ -28,7 +29,10 @@ export type {
   ChronologicalSplitOptions,
   ChronologicalSplitWithValidationOptions,
   Dataset,
+  Fold,
   Gap,
+  KFold,
+  KFoldOptions,
   Origin,
   RandomSplitOptions,
   RandomSplitWithValidationOptions,

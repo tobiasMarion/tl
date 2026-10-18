@@ -6,7 +6,7 @@ import type {
 } from '../features/fields.ts'
 import type { InferShape, Shape } from '../features/infer.ts'
 import { allocate } from './allocate.ts'
-import { shuffledIndices } from './random.ts'
+import { isSeed, MAX_SEED, shuffledIndices } from './random.ts'
 import {
   type Origin,
   type Test,
@@ -67,8 +67,6 @@ export type TrainValidationTest<
 export const blockSize = (n: number, fraction: number): number =>
   Math.ceil(n * fraction * (1 - 1e-12))
 
-const MAX_SEED = 0xffffffff
-
 // Quotes strings, so a JavaScript caller passing '0.2' sees why it was rejected.
 const show = (value: unknown) =>
   typeof value === 'string' ? `'${value}'` : String(value)
@@ -83,9 +81,7 @@ const checkFraction = (name: string, value: number) => {
   }
 }
 
-// Validates the options at the entry point, so randomSplit can trust them. The
-// seed has to be a uint32: seededRandom keeps only 32 bits, so any other number
-// would silently become a different seed.
+// Validates the options at the entry point, so randomSplit can trust them.
 const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   if (n === 0) throw new RangeError('dataset.split(): the dataset has no rows')
 
@@ -100,7 +96,7 @@ const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   }
 
   const { seed } = options
-  if (!(Number.isInteger(seed) && seed >= 0 && seed <= MAX_SEED)) {
+  if (!isSeed(seed)) {
     throw new RangeError(
       `dataset.split(): seed must be an integer from 0 to ${MAX_SEED}, such as 42, received ${show(seed)}`
     )
@@ -118,7 +114,8 @@ const checkOptions = <S extends Shape>(n: number, options: SplitOptions<S>) => {
   }
 }
 
-const isStratifiable = (field: AnyField | undefined) =>
+/** A required category or ordered category: the fields stratify accepts. */
+export const isStratifiable = (field: AnyField | undefined) =>
   field !== undefined &&
   (field.kind === 'category' || field.kind === 'ordered-category') &&
   !field.isOptional

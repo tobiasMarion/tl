@@ -96,8 +96,11 @@ The training block remembers where it came from: a `Train<F, 'dataset'>` accepts
 The training block is shuffled with `seed` and cut into `k` folds; each fold is held out once while the others train.
 
 ```ts
-ml.kFold({ k: 5, seed: 42 })
-ml.kFold({ k: 5, seed: 42, stratify: 'species' })
+const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
+const cv = ml.kFold({ k: 5, seed: 42, stratify: 'species' })
+for (const fold of cv.folds(train)) {
+  // fit on fold.train, score on fold.validation
+}
 ```
 
 ```
@@ -107,7 +110,11 @@ fold 3  [train ────────][valid.][train ──────]
 ...
 ```
 
-Every row is held out exactly once. On a series it doesn't exist: blocks after the held-out one would train on the future.
+- Every row is held out exactly once. The shuffled rows are dealt to the folds in turn, so fold sizes differ by at most one.
+- **`stratify`:** keeps the proportion of each category in every fold: the shuffled rows are grouped by class before they are dealt, so each fold gets its share of each class, give or take one row. As in the random split, only required `category` and `orderedCategory` fields. `ml.kFold` is created before it meets data, so the field is checked when `folds` gets the training block: a wrong field is a type error there that lists the valid ones.
+- Each fold is a `Train<F, 'dataset'>` and a `Validation<F>`, and both keep the order of the training block. A fold's training block can be cross-validated again.
+- `k` must be an integer of at least 2 and `seed` an integer from 0 to 2³²−1, checked when `ml.kFold` is called. `folds` throws when the training block has fewer rows than `k`, and, with `stratify`, when a class has fewer rows than `k` (it couldn't appear in every fold).
+- On a series it doesn't exist: blocks after the held-out one would train on the future. A `Train<F, 'series'>` is a type error.
 
 ### Walk-forward
 
@@ -147,7 +154,7 @@ Cross-validation chooses; the test block estimates:
 
 Reporting the cross-validation score of the winner is optimistic: the winner is the configuration that got lucky on those folds. The test block never took part in the choice, so its score is honest.
 
-M2 provides `kFold` and `walkForward` and how they cut a `Train<F>`. The search that uses them (for example `ml.search(model, { k: [3, 5, 7] }, { on: train, cv: ml.kFold({ k: 5, seed: 42 }) })`) comes with the first algorithm that has a real hyperparameter (M6), and the backtest with the pipeline (M5).
+M2 provides `kFold` and `walkForward`, and `folds` to cut a `Train<F>` with them by hand. The search that uses them (for example `ml.search(model, { k: [3, 5, 7] }, { on: train, cv: ml.kFold({ k: 5, seed: 42 }) })`) comes with the first algorithm that has a real hyperparameter (M6), and the backtest with the pipeline (M5).
 
 ## Required decisions
 

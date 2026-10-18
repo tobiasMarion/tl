@@ -35,7 +35,7 @@ S1 is already caught by the types: a `Test` isn't assignable to `Train`. Nothing
 
 | ID | Error | Today | Planned |
 |----|-------|-------|---------|
-| T1 | Random split of a time series | compile, runtime | — |
+| T1 | Random split or k-fold of a time series | compile, runtime (split); compile (k-fold) | — |
 | T2 | Time series split in the order the rows arrived, not by time | by design (`ml.series` sorts) | — |
 | T3 | Rows of several series stacked as one, so a time repeats | runtime (`duplicate_time`) | — |
 | T4 | No gap between train and test, so the last training labels look into the test period | required (`gap`) | — |

@@ -25,6 +25,14 @@ test.split({ test: 0.5, seed: 42 })
 // @ts-expect-error — a series only splits by time
 series.split({ test: 0.2, seed: 42 })
 
+// T1: shuffling the training block of a time series into folds
+const seriesTrain = series.split({
+  testFrom: '2025-01-01',
+  gap: { steps: 1 }
+}).train
+// @ts-expect-error — k-fold only accepts a training block cut from a dataset
+ml.kFold({ k: 5, seed: 42 }).folds(seriesTrain)
+
 // T4: no gap between train and test
 // @ts-expect-error — gap is required, even { steps: 0 }
 series.split({ testFrom: '2025-01-01' })

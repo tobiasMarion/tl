@@ -119,28 +119,36 @@ fold 3  [train ────────][valid.][train ──────]
 
 ### Walk-forward
 
-The time series counterpart of k-fold: the validation block always comes after the training data.
+The time series counterpart of k-fold: each fold validates on a block of time and trains on the history before it. "Train on 3 months, validate on the next one":
 
 ```ts
-ml.walkForward({
-  train: 'expanding', // or { window: 504 }
-  validation: 21,
-  step: 21,
-  gap: { steps: 1 }
+const { train, test } = prices.split({ testFrom: '2025-01-01', gap: { days: 5 } })
+const cv = ml.walkForward({
+  validationFrom: '2024-04-01', // start of the first validation block
+  validation: { months: 1 }, // then one block a month until the end of train
+  train: { months: 3 }, // the 3 months before each block, or 'expanding'
+  gap: { days: 5 }
 })
+for (const fold of cv.folds(train)) {
+  // fit on fold.train, score on fold.validation
+}
 ```
 
 ```
-fold 1  [train ─────────]·[valid.]
-fold 2  [train ────────────────]·[valid.]
-fold 3  [train ───────────────────────]·[valid.]
-                                      ^ gap
+fold 1  [jan feb mar]·[apr]
+fold 2      [feb mar apr]·[may]
+fold 3          [mar apr may]·[jun]
+                           ^ gap
 ```
 
-- **`train`:** an expanding window keeps all history; a rolling window keeps the last N periods.
-- **`validation`:** the size of each held-out block.
-- **`step`:** how far the window moves between folds.
-- **`gap`:** periods dropped between train and the held-out block (embargo), in the same units as the chronological split. It has to cover at least the target horizon, otherwise the last training labels overlap the held-out period.
+- **`validationFrom`:** where the first validation block starts, like `testFrom` in the chronological split. Starting on the first of a month lines the blocks up with the calendar.
+- **`validation`:** the length of each validation block. The blocks follow each other until the end of the training block, without overlapping or leaving rows out; the last one can be shorter. A calendar block where the series has no rows, such as a month without data, is skipped.
+- **`train`:** `'expanding'` trains each fold on all the history before its block; a period such as `{ months: 3 }` trains on that much history only (a rolling window), for when the distant past no longer looks like the present.
+- **`gap`:** rows dropped before each validation block, out of the end of the training window. It has to cover at least the target horizon, otherwise the last training labels overlap the validation block.
+- `validation`, `train` and `gap` take the same units: `{ steps: n }` or a duration such as `{ days: 5 }` or `{ months: 1 }` (see the [chronological split](#chronological-split)). The number of folds follows from them.
+- Each fold is a `Train<F, 'series'>` and a `Validation<F>`, so a fold's training block can be cut by walk-forward again.
+- The options are checked when `ml.walkForward` is called. `folds` throws when `validationFrom` is after the training block, when a fold has no rows left for training after the gap, and when a rolling window doesn't fit before the first block (that fold would train on less history than asked for).
+- On a dataset it doesn't exist: there is no time to walk forward on. A `Train<F, 'dataset'>` is a type error.
 
 With `group`, all groups share the same time cut, so no ticker sees a period that is in another ticker's held-out block.
 
@@ -161,7 +169,7 @@ M2 provides `kFold` and `walkForward`, and `folds` to cut a `Train<F>` with them
 
 - Split strategy and its parameters. There is no default `test` or `validation` size, no default `k`, and no default window.
 - `seed` for random splits and k-fold.
-- `gap` for temporal splits, with its unit (`{ steps: 5 }`, `{ days: 5 }`, ...). `{ steps: 0 }` is allowed, but it has to be written down explicitly.
+- `gap` for temporal splits and walk-forward, with its unit (`{ steps: 5 }`, `{ days: 5 }`, ...). `{ steps: 0 }` is allowed, but it has to be written down explicitly.
 
 ## After the MVP
 
@@ -173,4 +181,3 @@ M2 provides `kFold` and `walkForward`, and `folds` to cut a `Train<F>` with them
 
 - Whether `Test<F>` gets its own final-evaluation API instead of sharing `evaluate` with `Validation<F>`, to make "evaluate on test once, at the end" explicit.
 - Whether `stratify` should be a required decision for classification targets.
-- Time units for walk-forward `window`, `step`, and `test`: the chronological split settles `gap` as one unit, `{ steps: n }` or a fixed-length duration such as `{ days: n }`, and walk-forward should follow it. Calendar periods with variable length (`'1M'`) are still open.

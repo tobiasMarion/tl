@@ -1,4 +1,4 @@
-import { daysInMonth } from '../features/timestamp.ts'
+import { daysInMonth, parseTimestamp } from '../features/timestamp.ts'
 
 // A length of time in a series, shared by the gap of the chronological split
 // and the blocks of walk-forward. `steps` count distinct times, the other
@@ -53,11 +53,24 @@ export const addMonths = (time: number, months: number): number => {
 }
 
 const show = (value: unknown) =>
-  typeof value === 'object' && value !== null
-    ? JSON.stringify(value)
-    : typeof value === 'string'
-      ? `'${value}'`
+  typeof value === 'string'
+    ? `'${value}'`
+    : typeof value === 'object' && value !== null && !(value instanceof Date)
+      ? JSON.stringify(value)
       : String(value)
+
+/** Converts a cut such as `testFrom` to milliseconds, or throws naming it. */
+export const toTime = (
+  caller: string,
+  name: string,
+  value: unknown
+): number => {
+  const check = parseTimestamp(value)
+  if (check.ok) return check.value
+  throw new (check.code === 'invalid_type' ? TypeError : RangeError)(
+    `${caller}: ${name} expected a Date, milliseconds since 1970 or an ISO 8601 date such as '2025-01-31', received ${show(value)}`
+  )
+}
 
 const plural = (value: number, unit: string) =>
   `${value} ${value === 1 ? unit.replace(/s$/, '') : unit}`

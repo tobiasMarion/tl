@@ -25,9 +25,13 @@ type _byClass = Expect<Equal<typeof byClass, KFold<'species'>>>
 
 // Each fold is a training block cut from a dataset and a validation block
 const folds = ml.kFold({ k: 5, seed: 42 }).folds(train)
-type _folds = Expect<Equal<typeof folds, readonly Fold<A>[]>>
-type _foldTrain = Expect<Equal<Fold<A>['train'], Train<A, 'dataset'>>>
-type _foldValidation = Expect<Equal<Fold<A>['validation'], Validation<A>>>
+type _folds = Expect<Equal<typeof folds, readonly Fold<A, 'dataset'>[]>>
+type _foldTrain = Expect<
+  Equal<Fold<A, 'dataset'>['train'], Train<A, 'dataset'>>
+>
+type _foldValidation = Expect<
+  Equal<Fold<A, 'dataset'>['validation'], Validation<A>>
+>
 
 byClass.folds(train)
 ml.kFold({ k: 5, seed: 42, stratify: 'size' }).folds(train)

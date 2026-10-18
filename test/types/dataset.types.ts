@@ -28,9 +28,15 @@ const _train: Train<P> = data
 
 // A random split of the original data gives a train and a test block
 const split = data.split({ test: 0.2, seed: 42 })
-type _split = Expect<Equal<typeof split, TrainTest<P>>>
-type _trainBlock = Expect<Equal<typeof split.train, Train<P>>>
+type _split = Expect<Equal<typeof split, TrainTest<P, 'dataset'>>>
+type _trainBlock = Expect<Equal<typeof split.train, Train<P, 'dataset'>>>
 type _testBlock = Expect<Equal<typeof split.test, Test<P>>>
+
+// A training block of either origin is still a training block
+const _anyTrain: Train<P> = split.train
+
+// @ts-expect-error — it was cut from a dataset, not a series
+const _seriesTrain: Train<P, 'series'> = split.train
 
 // @ts-expect-error — the test block can't be used for training
 const _testAsTrain: Train<P> = split.test
@@ -43,7 +49,9 @@ data.split({ seed: 42 })
 
 // Asking for a validation fraction adds a validation block
 const threeWay = data.split({ validation: 0.15, test: 0.15, seed: 42 })
-type _threeWay = Expect<Equal<typeof threeWay, TrainValidationTest<P>>>
+type _threeWay = Expect<
+  Equal<typeof threeWay, TrainValidationTest<P, 'dataset'>>
+>
 type _validationBlock = Expect<Equal<typeof threeWay.validation, Validation<P>>>
 
 // @ts-expect-error — validation only exists when it was asked for

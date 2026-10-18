@@ -29,6 +29,7 @@ export type {
   ChronologicalSplitWithValidationOptions,
   Dataset,
   Gap,
+  Origin,
   RandomSplitOptions,
   RandomSplitWithValidationOptions,
   Series,

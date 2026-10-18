@@ -31,7 +31,7 @@ export type Dataset<S extends Shape> = {
       }[keyof S] &
         string
     >
-  ): TrainValidationTest<S>
+  ): TrainValidationTest<S, 'dataset'>
   /** Shuffles the rows with `seed` and holds out a `test` fraction. */
   split(
     options: RandomSplitOptions<
@@ -42,7 +42,7 @@ export type Dataset<S extends Shape> = {
       }[keyof S] &
         string
     >
-  ): TrainTest<S>
+  ): TrainTest<S, 'dataset'>
 }
 
 export const dataset = <S extends Shape>(

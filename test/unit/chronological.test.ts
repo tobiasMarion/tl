@@ -26,6 +26,17 @@ const range = (from: number, to: number) =>
   Array.from({ length: to - from + 1 }, (_, i) => from + i)
 
 describe('series.split', () => {
+  test('gives every block the schema', () => {
+    const { train, validation, test } = daily.split({
+      validationFrom: date(5),
+      testFrom: date(8),
+      gap: { steps: 0 }
+    })
+    for (const block of [train, validation, test]) {
+      assert.equal(block.features, prices)
+    }
+  })
+
   test('cuts at testFrom', () => {
     const { train, test } = daily.split({
       testFrom: date(8),

@@ -8,6 +8,7 @@ import type { InferShape, Shape } from '../features/infer.ts'
 import { allocate } from './allocate.ts'
 import { shuffledIndices } from './random.ts'
 import {
+  type Origin,
   type Test,
   type Train,
   testBlock,
@@ -46,12 +47,16 @@ export type RandomSplitWithValidationOptions<K extends string> =
     readonly validation: number
   }
 
-export type TrainTest<S extends Shape> = {
-  readonly train: Train<S>
+/** The blocks of a split. `O` is what the training block was cut from. */
+export type TrainTest<S extends Shape, O extends Origin = Origin> = {
+  readonly train: Train<S, O>
   readonly test: Test<S>
 }
 
-export type TrainValidationTest<S extends Shape> = TrainTest<S> & {
+export type TrainValidationTest<
+  S extends Shape,
+  O extends Origin = Origin
+> = TrainTest<S, O> & {
   readonly validation: Validation<S>
 }
 
@@ -222,7 +227,7 @@ export const randomSplit = <S extends Shape>(
   features: Features<S>,
   rows: readonly InferShape<S>[],
   options: SplitOptions<S>
-): TrainTest<S> | TrainValidationTest<S> => {
+): TrainTest<S, 'dataset'> | TrainValidationTest<S, 'dataset'> => {
   checkOptions(rows.length, options)
   checkStratify(features, rows, options)
   const shuffled = shuffledIndices(rows.length, options.seed)
@@ -253,9 +258,9 @@ export const randomSplit = <S extends Shape>(
   const pick = (role: Role) =>
     shuffled.filter(i => roles[i] === role).map(i => rows[i] as InferShape<S>)
 
-  const test = testBlock(pick('test'))
-  const train = trainBlock(pick('train'))
+  const test = testBlock(features, pick('test'))
+  const train = trainBlock<S, 'dataset'>(features, pick('train'))
   if (options.validation === undefined) return Object.freeze({ train, test })
-  const validation = validationBlock(pick('validation'))
+  const validation = validationBlock(features, pick('validation'))
   return Object.freeze({ train, validation, test })
 }

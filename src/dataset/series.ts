@@ -55,12 +55,12 @@ export type Series<S extends Shape> = {
    */
   split(
     options: ChronologicalSplitWithValidationOptions
-  ): TrainValidationTest<S>
+  ): TrainValidationTest<S, 'series'>
   /**
    * Cuts by time: train, then test from `testFrom`, dropping `gap` before the
    * test block.
    */
-  split(options: ChronologicalSplitOptions): TrainTest<S>
+  split(options: ChronologicalSplitOptions): TrainTest<S, 'series'>
 }
 
 const isRequired = (field: AnyField | undefined, kind: AnyField['kind']) =>
@@ -184,7 +184,13 @@ export const series = <S extends Shape>(
     options: ChronologicalSplitOptions & {
       readonly validationFrom?: TimestampInput
     }
-  ) => chronologicalSplit<S>(parsed, time, options)) as Series<S>['split']
+  ) =>
+    chronologicalSplit<S>(
+      features,
+      parsed,
+      time,
+      options
+    )) as Series<S>['split']
 
   return Object.freeze({ features, rows: parsed, time, group, split })
 }

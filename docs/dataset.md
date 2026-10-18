@@ -15,7 +15,7 @@ The two are distinct types, and each one exposes only the splits that make sense
 
 ## Train, validation, and test
 
-Three *branded* types: they have the same shape but aren't interchangeable.
+Three *branded* types: they have the same shape, the schema (`features`) and the `rows`, but aren't interchangeable.
 
 | Type            | Used for                                                       |
 |-----------------|----------------------------------------------------------------|
@@ -89,7 +89,7 @@ A single validation block is a single draw: with little data, a model can win on
 
 `ml.kFold` and `ml.walkForward` don't hold data: they describe how to cut a `Train<F>`, and are passed to what trains many times, the hyperparameter search and the backtest (see [Pipeline](pipeline.md#backtest)). The transformers and the estimator are refit on every fold, so nothing learned in one fold leaks into another. They don't create roles, so `split` stays the only way to separate data.
 
-The training block remembers where it came from: a `Train<F>` cut from a `Dataset<F>` accepts `kFold`, and one cut from a `Series<F>` accepts only `walkForward`.
+The training block remembers where it came from: a `Train<F, 'dataset'>` accepts `kFold`, and a `Train<F, 'series'>` accepts only `walkForward`. `Train<F>` alone accepts both, for what doesn't depend on order, such as `fit`.
 
 ### k-fold
 

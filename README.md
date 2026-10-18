@@ -174,7 +174,7 @@ Changes reach `main` only through pull requests. CI runs `check`, the build, and
 │   └── fixtures/             # synthetic data with known parameters
 ├── examples/                 # complete runnable workflows, one folder each
 │   ├── penguins/             # index.ts (pipeline), data.json, bad-data.json
-│   └── diamonds/             # regression with ordered categories
+│   └── air-passengers/       # monthly time series, walk-forward
 └── docs/
     └── algorithms/
 ```

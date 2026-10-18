@@ -58,13 +58,9 @@ console.log(
 
 // Cross-validation resamples only the training block: each fold holds out a
 // different part of it, and the test block stays out of every fold.
+// Printing the folds draws them, with the species each one holds out.
 const cv = ml.kFold({ k: 3, seed: 42, stratify: 'species' })
-cv.folds(train).forEach((fold, i) => {
-  const species = fold.validation.rows.map(row => row.species).join(', ')
-  console.log(
-    `fold ${i + 1}: ${fold.train.rows.length} to train, ${fold.validation.rows.length} to validate (${species})`
-  )
-})
+console.log(cv.folds(train))
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
 // ── M5: Pipeline and metrics ─────────────────────────────────────────────────

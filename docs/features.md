@@ -71,7 +71,7 @@ const reviews = ml.features({
 
 The value type is the same literal union as `ml.category`, and validation is the same; error messages show the order (`one of 'poor' < 'fair' < 'good'`). The difference is for later steps: the encoder can turn an ordered category into a single ranked column instead of one-hot columns, and a tree can split on `≤ 'fair'`. `ml.fromSchema` maps `z.enum` to `ml.category`; pass an `ml.orderedCategory` override when the order matters.
 
-See `examples/diamonds`, where `cut`, `color` and `clarity` are graded scales (`npm run example:diamonds`).
+See `examples/penguins`, where `bodyCondition` is a graded scale from `'poor'` to `'good'` (`npm run example`).
 
 ## Runtime validation
 

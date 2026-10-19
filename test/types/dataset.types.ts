@@ -10,24 +10,24 @@ import {
 } from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number().optional()
 })
-type Penguin = Infer<typeof penguins>
-type P = typeof penguins.fields
+type Penguin = Infer<typeof penguinSchema>
+type P = typeof penguinSchema.fields
 
-const data = ml.dataset(penguins, [])
+const penguins = ml.dataset(penguinSchema, [])
 
 // Rows come out typed by the schema
-type _dataset = Expect<Equal<typeof data, Dataset<P>>>
-type _rows = Expect<Equal<typeof data.rows, readonly Penguin[]>>
+type _dataset = Expect<Equal<typeof penguins, Dataset<P>>>
+type _rows = Expect<Equal<typeof penguins.rows, readonly Penguin[]>>
 
 // @ts-expect-error — the original data has to be split before training
-const _train: Train<P> = data
+const _train: Train<P> = penguins
 
 // A random split of the original data gives a train and a test block
-const split = data.split({ test: 0.2, seed: 42 })
+const split = penguins.split({ test: 0.2, seed: 42 })
 type _split = Expect<Equal<typeof split, TrainTest<P, 'dataset'>>>
 type _trainBlock = Expect<Equal<typeof split.train, Train<P, 'dataset'>>>
 type _testBlock = Expect<Equal<typeof split.test, Test<P>>>
@@ -42,13 +42,13 @@ const _seriesTrain: Train<P, 'series'> = split.train
 const _testAsTrain: Train<P> = split.test
 
 // @ts-expect-error — test size and seed are required decisions
-data.split({ test: 0.2 })
+penguins.split({ test: 0.2 })
 
 // @ts-expect-error — test size and seed are required decisions
-data.split({ seed: 42 })
+penguins.split({ seed: 42 })
 
 // Asking for a validation fraction adds a validation block
-const threeWay = data.split({ validation: 0.15, test: 0.15, seed: 42 })
+const threeWay = penguins.split({ validation: 0.15, test: 0.15, seed: 42 })
 type _threeWay = Expect<
   Equal<typeof threeWay, TrainValidationTest<P, 'dataset'>>
 >
@@ -58,7 +58,7 @@ type _validationBlock = Expect<Equal<typeof threeWay.validation, Validation<P>>>
 split.validation
 
 // @ts-expect-error — a typo in an option doesn't compile
-data.split({ valdation: 0.15, test: 0.15, seed: 42 })
+penguins.split({ valdation: 0.15, test: 0.15, seed: 42 })
 
 // @ts-expect-error — validation and test aren't interchangeable
 const _validationAsTest: Test<P> = threeWay.validation
@@ -70,13 +70,13 @@ split.train.split({ test: 0.2, seed: 42 })
 split.test.split({ test: 0.2, seed: 42 })
 
 // stratify accepts required category and ordered category fields
-const animals = ml.features({
+const animalSchema = ml.features({
   species: ml.category(['a', 'b']),
   size: ml.orderedCategory(['small', 'large']),
   island: ml.category(['x', 'y']).optional(),
   weight: ml.number()
 })
-const zoo = ml.dataset(animals, [])
+const zoo = ml.dataset(animalSchema, [])
 zoo.split({ test: 0.2, seed: 42, stratify: 'species' })
 zoo.split({ test: 0.2, seed: 42, stratify: 'size' })
 zoo.split({ validation: 0.1, test: 0.2, seed: 42, stratify: 'species' })

@@ -2,16 +2,16 @@
 // by-design statuses are in errors.test.ts.
 import { ml, type Train } from '../../src/index.ts'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number()
 })
-type P = typeof penguins.fields
-const data = ml.dataset(penguins, [])
-const { test } = data.split({ test: 0.2, seed: 42 })
+type P = typeof penguinSchema.fields
+const penguins = ml.dataset(penguinSchema, [])
+const { test } = penguins.split({ test: 0.2, seed: 42 })
 
-const prices = ml.features({ date: ml.timestamp(), close: ml.number() })
-const series = ml.series(prices, [], { time: 'date' })
+const priceSchema = ml.features({ date: ml.timestamp(), close: ml.number() })
+const series = ml.series(priceSchema, [], { time: 'date' })
 
 // S1: training on the test block
 // @ts-expect-error — a Test isn't a Train
@@ -45,4 +45,4 @@ ml.walkForward({
 
 // E1: a split that can't be repeated
 // @ts-expect-error — seed is required
-data.split({ test: 0.2 })
+penguins.split({ test: 0.2 })

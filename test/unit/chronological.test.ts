@@ -4,7 +4,7 @@ import { ml } from '../../src/index.ts'
 
 const DAY = 86_400_000
 
-const prices = ml.features({
+const priceSchema = ml.features({
   date: ml.timestamp(),
   ticker: ml.category(['AAPL', 'MSFT']),
   close: ml.number()
@@ -15,7 +15,7 @@ const days = Array.from({ length: 10 }, (_, i) => i + 1)
 
 // One row a day from Jan 1 to Jan 10; close is the day of the month
 const daily = ml.series(
-  prices,
+  priceSchema,
   days.map(day => ({ date: date(day), ticker: 'AAPL', close: day })),
   { time: 'date' }
 )
@@ -33,7 +33,7 @@ describe('series.split', () => {
       gap: { steps: 0 }
     })
     for (const block of [train, validation, test]) {
-      assert.equal(block.features, prices)
+      assert.equal(block.features, priceSchema)
     }
   })
 
@@ -98,7 +98,7 @@ describe('series.split', () => {
 
   test('counts steps in distinct times, so every group shares the cut', () => {
     const panel = ml.series(
-      prices,
+      priceSchema,
       days.flatMap(day => [
         { date: date(day), ticker: 'AAPL', close: day },
         { date: date(day), ticker: 'MSFT', close: day }
@@ -161,7 +161,7 @@ describe('series.split calendar gaps', () => {
     new Date(Date.UTC(2024, month + 1, 0)).toISOString()
   )
   const monthly = ml.series(
-    prices,
+    priceSchema,
     [...monthEnds, '2025-03-31'].map((time, i) => ({
       date: time,
       ticker: 'AAPL',
@@ -199,7 +199,7 @@ describe('series.split calendar gaps', () => {
     // One year before Feb 29, 2024 is Feb 28, 2023, not Mar 1, so Feb 28
     // falls inside the gap
     const leap = ml.series(
-      prices,
+      priceSchema,
       ['2023-02-27', '2023-02-28', '2024-02-29'].map((time, i) => ({
         date: time,
         ticker: 'AAPL',
@@ -312,7 +312,7 @@ describe('series.split options', () => {
   })
 
   test('rejects an empty series', () => {
-    const empty = ml.series(prices, [], { time: 'date' })
+    const empty = ml.series(priceSchema, [], { time: 'date' })
     assert.throws(() => empty.split({ testFrom: date(8), gap: { steps: 0 } }), {
       name: 'RangeError',
       message:

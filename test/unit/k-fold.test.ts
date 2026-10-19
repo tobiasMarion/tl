@@ -2,17 +2,17 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { type KFold, type KFoldOptions, ml } from '../../src/index.ts'
 
-const points = ml.features({
+const pointSchema = ml.features({
   id: ml.number(),
   label: ml.category(['a', 'b'])
 })
 // 12 rows: ids 0 to 11, 'a' for ids below 8 and 'b' for the rest
-const data = ml.dataset(
-  points,
+const points = ml.dataset(
+  pointSchema,
   Array.from({ length: 12 }, (_, id) => ({ id, label: id < 8 ? 'a' : 'b' }))
 )
 // A split with the smallest test block leaves 11 training rows
-const { train } = data.split({ test: 0.01, seed: 7 })
+const { train } = points.split({ test: 0.01, seed: 7 })
 
 const ids = (block: { readonly rows: readonly { id: number }[] }) =>
   block.rows.map(row => row.id)
@@ -107,7 +107,7 @@ describe('ml.kFold', () => {
     for (const fold of folds) {
       assert.ok(Object.isFrozen(fold))
       for (const block of [fold.train, fold.validation]) {
-        assert.equal(block.features, points)
+        assert.equal(block.features, pointSchema)
         assert.ok(Object.isFrozen(block.rows))
       }
     }

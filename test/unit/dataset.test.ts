@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { FeatureValidationError, ml } from '../../src/index.ts'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number().optional()
 })
@@ -14,10 +14,10 @@ const rows = [
 
 describe('dataset', () => {
   test('keeps the schema and the parsed records', () => {
-    const data = ml.dataset(penguins, rows)
-    assert.strictEqual(data.features, penguins)
+    const penguins = ml.dataset(penguinSchema, rows)
+    assert.strictEqual(penguins.features, penguinSchema)
     // Parsed, not copied: a missing value comes out as undefined
-    assert.deepEqual(data.rows, [
+    assert.deepEqual(penguins.rows, [
       { species: 'Adelie', billLengthMm: 39.1 },
       { species: 'Gentoo', billLengthMm: undefined }
     ])
@@ -25,14 +25,14 @@ describe('dataset', () => {
 
   test('rejects invalid rows', () => {
     assert.throws(
-      () => ml.dataset(penguins, [{ species: 'Emperor' }]),
+      () => ml.dataset(penguinSchema, [{ species: 'Emperor' }]),
       FeatureValidationError
     )
   })
 
   test('starts the error stack at the dataset call', () => {
     try {
-      ml.dataset(penguins, [{ species: 'Emperor' }])
+      ml.dataset(penguinSchema, [{ species: 'Emperor' }])
     } catch (error) {
       assert.ok(error instanceof FeatureValidationError)
       const frame = error.stack?.split('\n').find(line => /^\s+at /.test(line))
@@ -43,15 +43,15 @@ describe('dataset', () => {
   })
 
   test('freezes the dataset, its rows and each record', () => {
-    const data = ml.dataset(penguins, rows)
-    assert.ok(Object.isFrozen(data))
-    assert.ok(Object.isFrozen(data.rows))
-    assert.ok(Object.isFrozen(data.rows[0]))
+    const penguins = ml.dataset(penguinSchema, rows)
+    assert.ok(Object.isFrozen(penguins))
+    assert.ok(Object.isFrozen(penguins.rows))
+    assert.ok(Object.isFrozen(penguins.rows[0]))
   })
 
   test("leaves the caller's rows untouched", () => {
     const input = [{ species: 'Adelie', billLengthMm: 39.1 }]
-    ml.dataset(penguins, input)
+    ml.dataset(penguinSchema, input)
     assert.ok(!Object.isFrozen(input))
     assert.ok(!Object.isFrozen(input[0]))
   })

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { FeatureValidationError, ml } from '../../src/index.ts'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number().optional(),
   isAdult: ml.boolean(),
@@ -47,7 +47,7 @@ describe('fields', () => {
 
 describe('ml.features', () => {
   test('keeps keys in declaration order', () => {
-    assert.deepEqual(penguins.keys, [
+    assert.deepEqual(penguinSchema.keys, [
       'species',
       'billLengthMm',
       'isAdult',
@@ -63,37 +63,39 @@ describe('ml.features', () => {
   })
 
   test('infer is type-only', () => {
-    assert.throws(() => penguins.infer, /type-only/)
+    assert.throws(() => penguinSchema.infer, /type-only/)
   })
 })
 
 describe('parse', () => {
   test('returns the record', () => {
-    assert.deepEqual(penguins.parse(valid), parsed)
+    assert.deepEqual(penguinSchema.parse(valid), parsed)
   })
 
   test('drops undeclared fields', () => {
-    assert.deepEqual(penguins.parse({ ...valid, id: 7 }), parsed)
+    assert.deepEqual(penguinSchema.parse({ ...valid, id: 7 }), parsed)
   })
 
   test('treats undefined, null and NaN as missing in optional fields', () => {
     for (const billLengthMm of [undefined, null, Number.NaN]) {
       assert.equal(
-        penguins.parse({ ...valid, billLengthMm }).billLengthMm,
+        penguinSchema.parse({ ...valid, billLengthMm }).billLengthMm,
         undefined
       )
     }
   })
 
   test('reports a missing required field with a hint', () => {
-    const [issue] = issuesOf(() => penguins.parse({ ...valid, isAdult: null }))
+    const [issue] = issuesOf(() =>
+      penguinSchema.parse({ ...valid, isAdult: null })
+    )
     assert.equal(issue?.code, 'missing')
     assert.match(issue?.message ?? '', /'isAdult' is required.*\.optional\(\)/)
   })
 
   test('reports the wrong type', () => {
     const [issue] = issuesOf(() =>
-      penguins.parse({ ...valid, billLengthMm: '39.1' })
+      penguinSchema.parse({ ...valid, billLengthMm: '39.1' })
     )
     assert.equal(issue?.code, 'invalid_type')
     assert.match(issue?.message ?? '', /expected a finite number.*'39\.1'/)
@@ -101,14 +103,14 @@ describe('parse', () => {
 
   test('rejects Infinity', () => {
     const [issue] = issuesOf(() =>
-      penguins.parse({ ...valid, billLengthMm: Number.POSITIVE_INFINITY })
+      penguinSchema.parse({ ...valid, billLengthMm: Number.POSITIVE_INFINITY })
     )
     assert.equal(issue?.code, 'invalid_type')
   })
 
   test('reports unknown categories with the expected ones', () => {
     const [issue] = issuesOf(() =>
-      penguins.parse({ ...valid, species: 'Emperor' })
+      penguinSchema.parse({ ...valid, species: 'Emperor' })
     )
     assert.equal(issue?.code, 'unknown_category')
     assert.match(
@@ -125,7 +127,7 @@ describe('parse', () => {
       '2007-11-10T00:00:00Z'
     ]) {
       assert.equal(
-        penguins.parse({ ...valid, observedAt }).observedAt,
+        penguinSchema.parse({ ...valid, observedAt }).observedAt,
         1194652800000
       )
     }
@@ -133,7 +135,7 @@ describe('parse', () => {
 
   test('reports invalid dates with the values received', () => {
     const [issue] = issuesOf(() =>
-      penguins.parse({ ...valid, observedAt: '2007-02-30' })
+      penguinSchema.parse({ ...valid, observedAt: '2007-02-30' })
     )
     assert.equal(issue?.code, 'invalid_timestamp')
     assert.equal(
@@ -143,7 +145,7 @@ describe('parse', () => {
   })
 
   test('reports records that are not objects', () => {
-    const [issue] = issuesOf(() => penguins.parse([1, 2]))
+    const [issue] = issuesOf(() => penguinSchema.parse([1, 2]))
     assert.equal(issue?.code, 'invalid_record')
   })
 })
@@ -154,7 +156,7 @@ describe('parseRows', () => {
       ...valid,
       billLengthMm: index % 10 === 0 ? 'NA' : 40
     }))
-    const issues = issuesOf(() => penguins.parseRows(rows))
+    const issues = issuesOf(() => penguinSchema.parseRows(rows))
     assert.equal(issues.length, 1)
     assert.deepEqual(issues[0]?.rows, [0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
     assert.deepEqual(issues[0]?.received, ['NA'])
@@ -166,7 +168,7 @@ describe('parseRows', () => {
 
   test('reports every problem at once', () => {
     const issues = issuesOf(() =>
-      penguins.parseRows([
+      penguinSchema.parseRows([
         { ...valid, species: 'Emperor' },
         { ...valid, isAdult: 'yes' }
       ])
@@ -195,21 +197,21 @@ describe('FeatureValidationError stack', () => {
 
   test('starts at the parse call', () => {
     assert.match(
-      firstFrame(() => penguins.parse({})),
+      firstFrame(() => penguinSchema.parse({})),
       /features\.test\.ts/
     )
   })
 
   test('starts at the parseRows call', () => {
     assert.match(
-      firstFrame(() => penguins.parseRows([{}])),
+      firstFrame(() => penguinSchema.parseRows([{}])),
       /features\.test\.ts/
     )
   })
 })
 
 describe('Standard Schema', () => {
-  const { validate, vendor, version } = penguins['~standard']
+  const { validate, vendor, version } = penguinSchema['~standard']
 
   test('exposes vendor and version', () => {
     assert.equal(vendor, 'tl')

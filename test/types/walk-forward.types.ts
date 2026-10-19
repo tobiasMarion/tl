@@ -1,10 +1,10 @@
 import { type Fold, ml, type Train, type WalkForward } from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
-const prices = ml.features({ date: ml.timestamp(), close: ml.number() })
-type P = typeof prices.fields
+const priceSchema = ml.features({ date: ml.timestamp(), close: ml.number() })
+type P = typeof priceSchema.fields
 const { train, validation, test } = ml
-  .series(prices, [], { time: 'date' })
+  .series(priceSchema, [], { time: 'date' })
   .split({
     validationFrom: '2024-07-01',
     testFrom: '2025-01-01',
@@ -65,7 +65,9 @@ cv.folds(validation)
 // @ts-expect-error — only training data is cross-validated
 cv.folds(test)
 
-const { train: tabular } = ml.dataset(prices, []).split({ test: 0.2, seed: 42 })
+const { train: tabular } = ml
+  .dataset(priceSchema, [])
+  .split({ test: 0.2, seed: 42 })
 
 // @ts-expect-error — walk-forward needs time order: a dataset has none
 cv.folds(tabular)

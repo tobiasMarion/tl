@@ -2,8 +2,8 @@
 
 ## Dataset and series
 
-- `ml.dataset(features, rows)`: rows have no meaningful order.
-- `ml.series(features, rows, { time, group? })`: rows are ordered by `time`. `group` identifies independent series in panel data (for example, one series per ticker).
+- `ml.dataset(schema, rows)`: rows have no meaningful order.
+- `ml.series(schema, rows, { time, group? })`: rows are ordered by `time`. `group` identifies independent series in panel data (for example, one series per ticker).
 
 `time` must be a required `timestamp` field and `group` a required `category` field: a row without a time has no place in the series, and a row without a group belongs to no series. A wrong field is a type error that lists the valid ones.
 
@@ -44,8 +44,8 @@ So a validation block always comes from training data, and nothing built from a 
 Only on `Dataset<F>`.
 
 ```ts
-const { train, test } = data.split({ test: 0.2, seed: 42 })
-const { train, validation, test } = data.split({
+const { train, test } = penguins.split({ test: 0.2, seed: 42 })
+const { train, validation, test } = penguins.split({
   validation: 0.15,
   test: 0.15,
   seed: 42
@@ -128,7 +128,7 @@ The training block remembers where it came from: a `Train<F, 'dataset'>` accepts
 The training block is shuffled with `seed` and cut into `k` folds; each fold is held out once while the others train.
 
 ```ts
-const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
+const { train, test } = penguins.split({ test: 0.2, seed: 42, stratify: 'species' })
 const cv = ml.kFold({ k: 5, seed: 42, stratify: 'species' })
 for (const fold of cv.folds(train)) {
   // fit on fold.train, score on fold.validation

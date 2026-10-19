@@ -1,7 +1,7 @@
 import { type Infer, ml, type StandardSchemaV1 } from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number().optional(),
   isAdult: ml.boolean(),
@@ -9,7 +9,7 @@ const penguins = ml.features({
   sex: ml.category(['male', 'female']).optional()
 })
 
-type Penguin = typeof penguins.infer
+type Penguin = typeof penguinSchema.infer
 
 type _infersRecord = Expect<
   Equal<
@@ -24,28 +24,28 @@ type _infersRecord = Expect<
   >
 >
 
-type _inferHelper = Expect<Equal<Infer<typeof penguins>, Penguin>>
+type _inferHelper = Expect<Equal<Infer<typeof penguinSchema>, Penguin>>
 
 type _standardOutput = Expect<
-  Equal<StandardSchemaV1.InferOutput<typeof penguins>, Penguin>
+  Equal<StandardSchemaV1.InferOutput<typeof penguinSchema>, Penguin>
 >
 
 type _keys = Expect<
   Equal<
-    (typeof penguins.keys)[number],
+    (typeof penguinSchema.keys)[number],
     'species' | 'billLengthMm' | 'isAdult' | 'observedAt' | 'sex'
   >
 >
 
 type _categoriesKeepLiterals = Expect<
   Equal<
-    (typeof penguins.fields.species.categories)[number],
+    (typeof penguinSchema.fields.species.categories)[number],
     'Adelie' | 'Chinstrap' | 'Gentoo'
   >
 >
 
 type _parseReturnsRecord = Expect<
-  Equal<ReturnType<typeof penguins.parse>, Penguin>
+  Equal<ReturnType<typeof penguinSchema.parse>, Penguin>
 >
 
 export const valid: Penguin = {

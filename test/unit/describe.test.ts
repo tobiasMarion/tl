@@ -8,13 +8,13 @@ import { ml } from '../../src/index.ts'
 const plain = (text: string) => text.replace(/\u001b\[\d+m/g, '')
 
 describe('printing folds', () => {
-  const points = ml.features({
+  const pointSchema = ml.features({
     id: ml.number(),
     label: ml.category(['a', 'b'])
   })
   const { train } = ml
     .dataset(
-      points,
+      pointSchema,
       Array.from({ length: 13 }, (_, id) => ({ id, label: id % 2 ? 'b' : 'a' }))
     )
     .split({ test: 0.01, seed: 7 })
@@ -40,14 +40,17 @@ describe('printing folds', () => {
   })
 
   test('draws walk-forward folds on a timeline', () => {
-    const prices = ml.features({ date: ml.timestamp(), close: ml.number() })
+    const priceSchema = ml.features({
+      date: ml.timestamp(),
+      close: ml.number()
+    })
     // One row a day in January 2024, and a test block from Feb 1
     const days = Array.from({ length: 32 }, (_, i) => ({
       date: Date.UTC(2024, 0, 1 + i),
       close: i
     }))
     const { train: series } = ml
-      .series(prices, days, { time: 'date' })
+      .series(priceSchema, days, { time: 'date' })
       .split({ testFrom: '2024-02-01', gap: { steps: 0 } })
     // Each fold trains on the 12 days before its block minus the 2-day gap
     const folds = ml
@@ -73,7 +76,7 @@ describe('printing folds', () => {
 })
 
 describe('printing blocks', () => {
-  const measures = ml.features({
+  const measureSchema = ml.features({
     taken: ml.timestamp(),
     size: ml.number().optional(),
     kind: ml.category(['small', 'large'])
@@ -83,10 +86,10 @@ describe('printing blocks', () => {
     size: i === 3 ? null : i * 1.5,
     kind: i < 10 ? 'small' : 'large'
   }))
-  const data = ml.dataset(measures, rows)
+  const measures = ml.dataset(measureSchema, rows)
 
   test('prints a block as a table, numbered by position in the data', () => {
-    const { test: held } = data.split({ test: 0.2, seed: 1 })
+    const { test: held } = measures.split({ test: 0.2, seed: 1 })
     const numbers = held.rows.map(row =>
       rows.findIndex(r => r.taken === row.taken)
     )
@@ -101,7 +104,7 @@ describe('printing blocks', () => {
   })
 
   test('prints missing values and dates', () => {
-    const two = ml.dataset(measures, [rows[3], rows[4]])
+    const two = ml.dataset(measureSchema, [rows[3], rows[4]])
     const { train, test: held } = two.split({ test: 0.5, seed: 1 })
     const all = plain(`${train}\n${held}`)
     assert.match(all, /0 {2}2024-01-04 {2}null {2}small/)
@@ -109,7 +112,7 @@ describe('printing blocks', () => {
   })
 
   test('keeps the first and last rows of a long block', () => {
-    const { train } = data.split({ test: 0.05, seed: 1 })
+    const { train } = measures.split({ test: 0.05, seed: 1 })
     const table = plain(String(train)).split('\n')
     assert.equal(table[0], 'train: 19 rows')
     // header, titles, 10 rows, the ellipsis, 5 rows
@@ -118,7 +121,7 @@ describe('printing blocks', () => {
   })
 
   test('gives a row the same number in every fold', () => {
-    const { train } = data.split({ test: 0.2, seed: 1 })
+    const { train } = measures.split({ test: 0.2, seed: 1 })
     const folds = ml.kFold({ k: 4, seed: 1 }).folds(train)
     const numbers = (text: string) =>
       plain(text)
@@ -134,7 +137,7 @@ describe('printing blocks', () => {
   })
 
   test('prints a fold as its number and both blocks', () => {
-    const { train } = data.split({ test: 0.2, seed: 1 })
+    const { train } = measures.split({ test: 0.2, seed: 1 })
     const second = ml.kFold({ k: 4, seed: 1 }).folds(train)[1]
     assert.ok(second)
     assert.equal(
@@ -145,7 +148,7 @@ describe('printing blocks', () => {
   })
 
   test('leaves rows, keys and JSON as they are', () => {
-    const { train } = data.split({ test: 0.2, seed: 1 })
+    const { train } = measures.split({ test: 0.2, seed: 1 })
     const [first] = ml.kFold({ k: 4, seed: 1 }).folds(train)
     assert.ok(first)
     assert.deepEqual(Object.keys(first), ['train', 'validation'])

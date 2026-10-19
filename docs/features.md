@@ -3,14 +3,14 @@
 The DSL defines the data schema using only the library. Users don't need to import Zod or any other validator.
 
 ```ts
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   billLengthMm: ml.number().optional(),
   isAdult: ml.boolean(),
   observedAt: ml.timestamp()
 })
 
-type Penguin = typeof penguins.infer // or Infer<typeof penguins>
+type Penguin = typeof penguinSchema.infer // or Infer<typeof penguinSchema>
 // {
 //   species: 'Adelie' | 'Chinstrap' | 'Gentoo'
 //   billLengthMm?: number | undefined
@@ -18,8 +18,8 @@ type Penguin = typeof penguins.infer // or Infer<typeof penguins>
 //   observedAt: number // milliseconds since 1970, UTC
 // }
 
-penguins.parse(record) // one record
-penguins.parseRows(rows) // many records, issues grouped by field
+penguinSchema.parse(record) // one record
+penguinSchema.parseRows(rows) // many records, issues grouped by field
 ```
 
 Training data doesn't need `parseRows`: `ml.dataset` validates its rows. `parse` and `parseRows` validate records on their own, for example a form entry or a request that goes to `predict`, which trusts its typed input. A project that already validates with Zod (or another Standard Schema library) can keep doing so and derive the features with [`ml.fromSchema`](#zod-compatibility-through-standard-schema).
@@ -49,7 +49,7 @@ Training data doesn't need `parseRows`: `ml.dataset` validates its rows. `parse`
 `.optional()` wraps the field type instead of flipping a flag on it, so hovers stay readable:
 
 ```ts
-// typeof penguins.fields
+// typeof penguinSchema.fields
 {
   readonly species: CategoryField<'Adelie' | 'Chinstrap' | 'Gentoo'>
   readonly billLengthMm: Optional<NumberField>
@@ -64,7 +64,7 @@ The runtime copy only changes `isOptional` to `true`. It has no `.optional()` of
 Some categories have a rank: `'poor' < 'fair' < 'good'`, `'cold' < 'warm' < 'hot'`. That order is a fact about the data, not a preprocessing choice, so it belongs in the schema:
 
 ```ts
-const reviews = ml.features({
+const reviewSchema = ml.features({
   condition: ml.orderedCategory(['poor', 'fair', 'good']) // lowest to highest
 })
 ```
@@ -120,7 +120,7 @@ const Penguin = z.object({
   observedAt: z.date()
 })
 
-const penguins = ml.fromSchema(Penguin, {
+const penguinSchema = ml.fromSchema(Penguin, {
   notes: ml.category(['calm', 'agitated']), // required: z.string() has no categories
   observedAt: ml.timestamp() // required: JSON Schema can't represent dates
 })

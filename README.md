@@ -32,7 +32,7 @@ Classifying the [Palmer Penguins](https://allisonhorst.github.io/palmerpenguins/
 ```ts
 import { ml } from 'tl'
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
   billLengthMm: ml.number().optional(),
@@ -42,11 +42,11 @@ const penguins = ml.features({
   sex: ml.category(['male', 'female']).optional()
 })
 
-const data = ml.dataset(penguins, rows) // runtime validation
-const { train, test } = data.split({ test: 0.2, seed: 42, stratify: 'species' })
+const penguins = ml.dataset(penguinSchema, rows) // runtime validation
+const { train, test } = penguins.split({ test: 0.2, seed: 42, stratify: 'species' })
 
 const model = ml
-  .pipeline(penguins)
+  .pipeline(penguinSchema)
   .target('species') // classification: inferred from a category
   .missing({
     billLengthMm: 'median', // required: every optional field needs a policy
@@ -81,13 +81,13 @@ fitted.evaluate(test, [ml.mse])
 Time-ordered data uses `ml.series` and gets temporal features and walk-forward validation through the same pipeline:
 
 ```ts
-const priceFeatures = ml.features({
+const priceSchema = ml.features({
   date: ml.timestamp(),
   ticker: ml.category(['PETR4', 'VALE3', 'ITUB4']),
   close: ml.number()
 })
 
-const prices = ml.series(priceFeatures, rows, { time: 'date', group: 'ticker' })
+const prices = ml.series(priceSchema, rows, { time: 'date', group: 'ticker' })
 const { train, test } = prices.split({ testFrom: '2025-01-01', gap: { steps: 1 } })
 
 const model = ml

@@ -7,15 +7,15 @@ import {
 } from '../../src/index.ts'
 import type { Equal, Expect } from './helpers.ts'
 
-const animals = ml.features({
+const animalSchema = ml.features({
   species: ml.category(['a', 'b']),
   size: ml.orderedCategory(['small', 'large']),
   island: ml.category(['x', 'y']).optional(),
   weight: ml.number()
 })
-type A = typeof animals.fields
+type A = typeof animalSchema.fields
 const { train, validation, test } = ml
-  .dataset(animals, [])
+  .dataset(animalSchema, [])
   .split({ validation: 0.1, test: 0.2, seed: 42 })
 
 // The stratify key is kept as a literal, and no stratify gives never
@@ -62,11 +62,11 @@ ml.kFold({ k: 5, seed: 42 }).folds(validation)
 ml.kFold({ k: 5, seed: 42 }).folds(test)
 
 // @ts-expect-error — the original data has to be split first
-ml.kFold({ k: 5, seed: 42 }).folds(ml.dataset(animals, []))
+ml.kFold({ k: 5, seed: 42 }).folds(ml.dataset(animalSchema, []))
 
-const prices = ml.features({ date: ml.timestamp(), close: ml.number() })
+const priceSchema = ml.features({ date: ml.timestamp(), close: ml.number() })
 const series = ml
-  .series(prices, [], { time: 'date' })
+  .series(priceSchema, [], { time: 'date' })
   .split({ testFrom: '2025-01-01', gap: { steps: 1 } })
 
 // @ts-expect-error — k-fold on a series' training block trains on the future

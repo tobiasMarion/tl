@@ -11,7 +11,7 @@ const rows: unknown[] = process.argv.includes('--bad') ? badData : goodData
 
 // ── M1: Feature DSL ──────────────────────────────────────────────────────────
 
-const penguins = ml.features({
+const penguinSchema = ml.features({
   species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
   island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
   billLengthMm: ml.number().optional(),
@@ -24,11 +24,11 @@ const penguins = ml.features({
   bodyCondition: ml.orderedCategory(['poor', 'fair', 'good'])
 })
 
-type Penguin = typeof penguins.infer
+type Penguin = typeof penguinSchema.infer
 
 // Validating a single record on its own, for example a form entry. Training
 // rows go through ml.dataset below; predict trusts typed input like this one.
-const entry: Penguin = penguins.parse({
+const entry: Penguin = penguinSchema.parse({
   species: 'Gentoo',
   island: 'Biscoe',
   billLengthMm: 47.5,
@@ -43,10 +43,10 @@ console.log(entry)
 // ── M2: Dataset, split and cross-validation ──────────────────────────────────
 
 // The entry point for training rows: validated once, here.
-const data = ml.dataset(penguins, rows)
-console.log(`${data.rows.length} valid penguins`)
+const penguins = ml.dataset(penguinSchema, rows)
+console.log(`${penguins.rows.length} valid penguins`)
 
-const { train, validation, test } = data.split({
+const { train, validation, test } = penguins.split({
   validation: 0.15,
   test: 0.15,
   seed: 42,
@@ -70,7 +70,7 @@ console.log(folds[0])
 // ── M6: Second algorithm ─────────────────────────────────────────────────────
 
 // const model = ml
-//   .pipeline(penguins)
+//   .pipeline(penguinSchema)
 //   .target('species')
 //   .missing({
 //     billLengthMm: 'median',

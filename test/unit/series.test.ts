@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { FeatureValidationError, ml } from '../../src/index.ts'
 
-const prices = ml.features({
+const priceSchema = ml.features({
   date: ml.timestamp(),
   ticker: ml.category(['MSFT', 'AAPL']),
   close: ml.number(),
@@ -21,8 +21,8 @@ const day = (date: string) => Date.parse(`${date}T00:00:00Z`)
 
 describe('series', () => {
   test('orders the rows by time', () => {
-    const data = ml.series(
-      prices,
+    const prices = ml.series(
+      priceSchema,
       [
         row('2025-01-03', 'AAPL', 3),
         row('2025-01-01', 'AAPL', 1),
@@ -31,16 +31,16 @@ describe('series', () => {
       { time: 'date' }
     )
     assert.deepEqual(
-      data.rows.map(r => r.close),
+      prices.rows.map(r => r.close),
       [1, 2, 3]
     )
-    assert.equal(data.rows[0]?.date, day('2025-01-01'))
+    assert.equal(prices.rows[0]?.date, day('2025-01-01'))
   })
 
   test('orders rows at the same time by the group category order', () => {
     // MSFT comes first in the schema, so it comes first on each day
-    const data = ml.series(
-      prices,
+    const prices = ml.series(
+      priceSchema,
       [
         row('2025-01-02', 'AAPL', 4),
         row('2025-01-01', 'AAPL', 2),
@@ -50,31 +50,31 @@ describe('series', () => {
       { time: 'date', group: 'ticker' }
     )
     assert.deepEqual(
-      data.rows.map(r => r.close),
+      prices.rows.map(r => r.close),
       [1, 2, 3, 4]
     )
   })
 
   test('keeps the time and group fields', () => {
-    const data = ml.series(prices, [], { time: 'date', group: 'ticker' })
-    assert.equal(data.time, 'date')
-    assert.equal(data.group, 'ticker')
-    assert.equal(data.features, prices)
-    assert.equal(ml.series(prices, [], { time: 'date' }).group, undefined)
+    const prices = ml.series(priceSchema, [], { time: 'date', group: 'ticker' })
+    assert.equal(prices.time, 'date')
+    assert.equal(prices.group, 'ticker')
+    assert.equal(prices.features, priceSchema)
+    assert.equal(ml.series(priceSchema, [], { time: 'date' }).group, undefined)
   })
 
   test('freezes the series, its rows and each record', () => {
-    const data = ml.series(prices, [row('2025-01-01', 'AAPL', 1)], {
+    const prices = ml.series(priceSchema, [row('2025-01-01', 'AAPL', 1)], {
       time: 'date'
     })
-    assert.ok(Object.isFrozen(data))
-    assert.ok(Object.isFrozen(data.rows))
-    assert.ok(Object.isFrozen(data.rows[0]))
+    assert.ok(Object.isFrozen(prices))
+    assert.ok(Object.isFrozen(prices.rows))
+    assert.ok(Object.isFrozen(prices.rows[0]))
   })
 
   test("leaves the caller's rows untouched", () => {
     const input = [row('2025-01-02', 'AAPL', 2), row('2025-01-01', 'AAPL', 1)]
-    ml.series(prices, input, { time: 'date' })
+    ml.series(priceSchema, input, { time: 'date' })
     assert.deepEqual(
       input.map(r => r.close),
       [2, 1]
@@ -84,7 +84,7 @@ describe('series', () => {
 
   test('rejects invalid rows and starts the stack at the series call', () => {
     try {
-      ml.series(prices, [row('2025-02-30', 'AAPL', 1)], { time: 'date' })
+      ml.series(priceSchema, [row('2025-02-30', 'AAPL', 1)], { time: 'date' })
     } catch (error) {
       assert.ok(error instanceof FeatureValidationError)
       assert.equal(error.issues[0]?.code, 'invalid_timestamp')
@@ -98,7 +98,7 @@ describe('series', () => {
 
 describe('series options', () => {
   const rejects = (options: object, message: string) =>
-    assert.throws(() => ml.series(prices, [], options as never), {
+    assert.throws(() => ml.series(priceSchema, [], options as never), {
       name: 'TypeError',
       message
     })
@@ -122,8 +122,8 @@ describe('series options', () => {
   })
 
   test('says when the schema has no field of the right kind', () => {
-    const numbers = ml.features({ x: ml.number() })
-    assert.throws(() => ml.series(numbers, [], { time: 'x' } as never), {
+    const numberSchema = ml.features({ x: ml.number() })
+    assert.throws(() => ml.series(numberSchema, [], { time: 'x' } as never), {
       name: 'TypeError',
       message:
         "ml.series(): time needs a required timestamp field, and the schema has none, received 'x'"
@@ -134,7 +134,7 @@ describe('series options', () => {
 describe('series repeated times', () => {
   const issueOf = (rows: object[], options: object) => {
     try {
-      ml.series(prices, rows, options as never)
+      ml.series(priceSchema, rows, options as never)
     } catch (error) {
       assert.ok(error instanceof FeatureValidationError)
       assert.equal(error.issues.length, 1)
@@ -144,12 +144,12 @@ describe('series repeated times', () => {
   }
 
   test('allows the same time in different groups', () => {
-    const data = ml.series(
-      prices,
+    const prices = ml.series(
+      priceSchema,
       [row('2025-01-01', 'AAPL', 1), row('2025-01-01', 'MSFT', 2)],
       { time: 'date', group: 'ticker' }
     )
-    assert.equal(data.rows.length, 2)
+    assert.equal(prices.rows.length, 2)
   })
 
   test('rejects a time repeated within a group', () => {

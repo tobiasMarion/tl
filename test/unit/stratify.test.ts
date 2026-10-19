@@ -3,13 +3,13 @@ import { describe, test } from 'node:test'
 import { shuffledIndices } from '../../src/dataset/random.ts'
 import { ml } from '../../src/index.ts'
 
-const animals = ml.features({
+const animalSchema = ml.features({
   id: ml.number(),
   species: ml.category(['a', 'b', 'c'])
 })
 // 60 a, 30 b, 10 c
-const data = ml.dataset(
-  animals,
+const animals = ml.dataset(
+  animalSchema,
   Array.from({ length: 100 }, (_, id) => ({
     id,
     species: id < 60 ? 'a' : id < 90 ? 'b' : 'c'
@@ -26,7 +26,7 @@ const counts = (block: Block) => {
 
 describe('dataset.split with stratify', () => {
   test('keeps the class proportions in every block', () => {
-    const { train, test } = data.split({
+    const { train, test } = animals.split({
       test: 0.2,
       seed: 42,
       stratify: 'species'
@@ -37,7 +37,7 @@ describe('dataset.split with stratify', () => {
 
   test('keeps the block sizes of the split without stratify', () => {
     // 7 rows: exact shares 4.2, 2.1, 0.7 → floors 4, 2, 0, one unit left for c
-    const { train, test } = data.split({
+    const { train, test } = animals.split({
       test: 0.07,
       seed: 42,
       stratify: 'species'
@@ -48,7 +48,7 @@ describe('dataset.split with stratify', () => {
   })
 
   test('keeps the class proportions with a validation block', () => {
-    const { train, validation, test } = data.split({
+    const { train, validation, test } = animals.split({
       validation: 0.1,
       test: 0.2,
       seed: 42,
@@ -60,7 +60,7 @@ describe('dataset.split with stratify', () => {
   })
 
   test('puts every row in exactly one block', () => {
-    const { train, validation, test } = data.split({
+    const { train, validation, test } = animals.split({
       validation: 0.1,
       test: 0.2,
       seed: 42,
@@ -70,34 +70,34 @@ describe('dataset.split with stratify', () => {
       [...ids(train), ...ids(validation), ...ids(test)].toSorted(
         (a, b) => a - b
       ),
-      ids(data)
+      ids(animals)
     )
   })
 
   test('keeps the same test block when validation is added', () => {
     const options = { test: 0.2, seed: 42, stratify: 'species' } as const
-    const twoWay = data.split(options)
-    const threeWay = data.split({ ...options, validation: 0.1 })
+    const twoWay = animals.split(options)
+    const threeWay = animals.split({ ...options, validation: 0.1 })
     assert.deepEqual(ids(threeWay.test), ids(twoWay.test))
   })
 
   test('gives the same blocks for the same seed', () => {
     const options = { test: 0.2, seed: 42, stratify: 'species' } as const
     assert.deepEqual(
-      ids(data.split(options).test),
-      ids(data.split(options).test)
+      ids(animals.split(options).test),
+      ids(animals.split(options).test)
     )
   })
 
   test('gives different blocks for a different seed', () => {
     assert.notDeepEqual(
-      ids(data.split({ test: 0.2, seed: 42, stratify: 'species' }).test),
-      ids(data.split({ test: 0.2, seed: 43, stratify: 'species' }).test)
+      ids(animals.split({ test: 0.2, seed: 42, stratify: 'species' }).test),
+      ids(animals.split({ test: 0.2, seed: 43, stratify: 'species' }).test)
     )
   })
 
   test('keeps the shuffled order instead of grouping rows by class', () => {
-    const { train, test } = data.split({
+    const { train, test } = animals.split({
       test: 0.2,
       seed: 42,
       stratify: 'species'
@@ -113,14 +113,14 @@ describe('dataset.split with stratify', () => {
   })
 
   test('accepts ordered category fields', () => {
-    const sizes = ml.features({
+    const sizeSchema = ml.features({
       size: ml.orderedCategory(['small', 'large'])
     })
     const rows = Array.from({ length: 10 }, (_, i) => ({
       size: i < 8 ? 'small' : 'large'
     }))
     const { test } = ml
-      .dataset(sizes, rows)
+      .dataset(sizeSchema, rows)
       .split({ test: 0.5, seed: 42, stratify: 'size' })
     assert.equal(test.rows.filter(row => row.size === 'large').length, 1)
   })
@@ -129,7 +129,7 @@ describe('dataset.split with stratify', () => {
 describe('dataset.split stratify checks', () => {
   test('rejects a field that is not in the schema', () => {
     assert.throws(
-      () => data.split({ test: 0.2, seed: 42, stratify: 'specie' as never }),
+      () => animals.split({ test: 0.2, seed: 42, stratify: 'specie' as never }),
       {
         name: 'TypeError',
         message:
@@ -140,7 +140,7 @@ describe('dataset.split stratify checks', () => {
 
   test('rejects a field that is not a category', () => {
     assert.throws(
-      () => data.split({ test: 0.2, seed: 42, stratify: 'id' as never }),
+      () => animals.split({ test: 0.2, seed: 42, stratify: 'id' as never }),
       {
         name: 'TypeError',
         message:
@@ -150,7 +150,7 @@ describe('dataset.split stratify checks', () => {
   })
 
   test('rejects an optional category field', () => {
-    const tagged = ml.features({
+    const taggedSchema = ml.features({
       kind: ml.category(['x', 'y']),
       tag: ml.category(['x', 'y']).optional()
     })
@@ -158,7 +158,7 @@ describe('dataset.split stratify checks', () => {
     assert.throws(
       () =>
         ml
-          .dataset(tagged, rows)
+          .dataset(taggedSchema, rows)
           .split({ test: 0.5, seed: 42, stratify: 'tag' as never }),
       {
         name: 'TypeError',
@@ -169,12 +169,12 @@ describe('dataset.split stratify checks', () => {
   })
 
   test('says when the schema has no category field to stratify by', () => {
-    const numbers = ml.features({ x: ml.number() })
+    const numberSchema = ml.features({ x: ml.number() })
     const rows = Array.from({ length: 4 }, (_, x) => ({ x }))
     assert.throws(
       () =>
         ml
-          .dataset(numbers, rows)
+          .dataset(numberSchema, rows)
           .split({ test: 0.5, seed: 42, stratify: 'x' as never }),
       {
         name: 'TypeError',
@@ -192,7 +192,7 @@ describe('dataset.split stratify checks', () => {
       { id: 3, species: 'b' },
       { id: 4, species: 'b' }
     ]
-    const small = ml.dataset(animals, rows)
+    const small = ml.dataset(animalSchema, rows)
     // Two blocks: 2 rows of 'b' are enough
     small.split({ test: 0.4, seed: 42, stratify: 'species' })
     // Three blocks: 'b' can't be in all of them
@@ -219,7 +219,7 @@ describe('dataset.split stratify checks', () => {
       species: id < 5 ? 'a' : 'b'
     }))
     const { test } = ml
-      .dataset(animals, rows)
+      .dataset(animalSchema, rows)
       .split({ test: 0.2, seed: 42, stratify: 'species' })
     assert.equal(test.rows.length, 2)
   })

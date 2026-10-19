@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { FeatureValidationError, ml } from '../../src/index.ts'
 
-const prices = ml.features({
+const priceSchema = ml.features({
   date: ml.timestamp(),
   ticker: ml.category(['AAPL', 'MSFT']),
   close: ml.number()
@@ -16,7 +16,7 @@ const days = Array.from({ length: 10 }, (_, i) => i + 1)
 const rows = days.map(day => ({ date: date(day), ticker: 'AAPL', close: day }))
 
 type Options = Parameters<
-  ReturnType<typeof ml.series<typeof prices.fields>>['split']
+  ReturnType<typeof ml.series<typeof priceSchema.fields>>['split']
 >[0]
 
 const issueCodes = (run: () => unknown) => {
@@ -31,7 +31,7 @@ const issueCodes = (run: () => unknown) => {
 
 describe('time series', () => {
   test('T1: a random split of a series throws', () => {
-    const series = ml.series(prices, rows, { time: 'date' })
+    const series = ml.series(priceSchema, rows, { time: 'date' })
     assert.throws(
       () => series.split({ test: 0.2, seed: 42 } as unknown as Options),
       TypeError
@@ -41,7 +41,7 @@ describe('time series', () => {
   test('T2: the split follows time, not the order the rows arrived in', () => {
     const shuffled = [...rows].reverse()
     const { train, test } = ml
-      .series(prices, shuffled, { time: 'date' })
+      .series(priceSchema, shuffled, { time: 'date' })
       .split({ testFrom: date(8), gap: { steps: 0 } })
     assert.deepEqual(
       train.rows.map(row => row.close),
@@ -56,13 +56,13 @@ describe('time series', () => {
   test('T3: series stacked without a group repeat times and throw', () => {
     const stacked = [...rows, ...rows.map(row => ({ ...row, ticker: 'MSFT' }))]
     assert.deepEqual(
-      issueCodes(() => ml.series(prices, stacked, { time: 'date' })),
+      issueCodes(() => ml.series(priceSchema, stacked, { time: 'date' })),
       ['duplicate_time']
     )
   })
 
   test('T4: a split without a gap throws', () => {
-    const series = ml.series(prices, rows, { time: 'date' })
+    const series = ml.series(priceSchema, rows, { time: 'date' })
     assert.throws(
       () => series.split({ testFrom: date(8) } as unknown as Options),
       TypeError
@@ -79,7 +79,7 @@ describe('time series', () => {
         .map(row => ({ ...row, ticker: 'MSFT' }))
     ]
     const { train, test } = ml
-      .series(prices, panel, { time: 'date', group: 'ticker' })
+      .series(priceSchema, panel, { time: 'date', group: 'ticker' })
       .split({ testFrom: date(8), gap: { steps: 2 } })
     const firstTest = Math.min(...test.rows.map(row => row.date))
     assert.equal(firstTest, Date.parse(date(8)))
@@ -94,15 +94,15 @@ describe('time series', () => {
 
 describe('evaluation', () => {
   test('E1: a random split without a seed throws', () => {
-    const penguins = ml.features({ billLengthMm: ml.number() })
-    const data = ml.dataset(penguins, [
+    const penguinSchema = ml.features({ billLengthMm: ml.number() })
+    const penguins = ml.dataset(penguinSchema, [
       { billLengthMm: 40 },
       { billLengthMm: 41 }
     ])
     assert.throws(
       () =>
-        data.split({ test: 0.5 } as unknown as Parameters<
-          typeof data.split
+        penguins.split({ test: 0.5 } as unknown as Parameters<
+          typeof penguins.split
         >[0]),
       RangeError
     )
@@ -114,7 +114,7 @@ describe('data', () => {
     assert.deepEqual(
       issueCodes(() =>
         ml.series(
-          prices,
+          priceSchema,
           [
             { date: '2025-02-30', ticker: 'AAPL', close: 1 },
             { date: date(1), ticker: 'GOOG', close: 1 }
@@ -129,7 +129,9 @@ describe('data', () => {
   test('D2: a missing value in a required field throws', () => {
     assert.deepEqual(
       issueCodes(() =>
-        ml.series(prices, [{ date: date(1), ticker: 'AAPL' }], { time: 'date' })
+        ml.series(priceSchema, [{ date: date(1), ticker: 'AAPL' }], {
+          time: 'date'
+        })
       ),
       ['missing']
     )

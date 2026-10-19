@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { ml, type WalkForwardOptions } from '../../src/index.ts'
 
-const prices = ml.features({
+const priceSchema = ml.features({
   date: ml.timestamp(),
   ticker: ml.category(['AAPL', 'MSFT']),
   close: ml.number()
@@ -24,7 +24,7 @@ const dailyRows = (skip: (time: number) => boolean = () => false) =>
 const trainOf = (rows: readonly object[]) =>
   ml
     .series(
-      prices,
+      priceSchema,
       [...rows, { date: '2024-12-31', ticker: 'AAPL', close: 1 }],
       {
         time: 'date',
@@ -196,7 +196,7 @@ describe('ml.walkForward', () => {
     for (const fold of folds) {
       assert.ok(Object.isFrozen(fold))
       for (const block of [fold.train, fold.validation]) {
-        assert.equal(block.features, prices)
+        assert.equal(block.features, priceSchema)
         assert.ok(Object.isFrozen(block.rows))
       }
     }
@@ -266,7 +266,7 @@ describe('ml.walkForward errors', () => {
 
   test('rejects a block that is not the training block of a series', () => {
     const forged = {
-      features: prices,
+      features: priceSchema,
       rows: train.rows
     } as unknown as typeof train
     assert.throws(() => ml.walkForward(valid).folds(forged), {

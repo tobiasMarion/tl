@@ -3,9 +3,9 @@ import { describe, test } from 'node:test'
 import { blockSize } from '../../src/dataset/split.ts'
 import { ml } from '../../src/index.ts'
 
-const points = ml.features({ id: ml.number() })
-const data = ml.dataset(
-  points,
+const pointSchema = ml.features({ id: ml.number() })
+const points = ml.dataset(
+  pointSchema,
   Array.from({ length: 10 }, (_, id) => ({ id }))
 )
 const ids = (block: { readonly rows: readonly { id: number }[] }) =>
@@ -33,53 +33,53 @@ describe('blockSize', () => {
 
 describe('dataset.split', () => {
   test('gives every block the schema', () => {
-    const { train, validation, test } = data.split({
+    const { train, validation, test } = points.split({
       validation: 0.2,
       test: 0.2,
       seed: 42
     })
     for (const block of [train, validation, test]) {
-      assert.equal(block.features, points)
+      assert.equal(block.features, pointSchema)
     }
   })
 
   test('holds out the test fraction, rounded up', () => {
-    const { train, test } = data.split({ test: 0.25, seed: 42 })
+    const { train, test } = points.split({ test: 0.25, seed: 42 })
     assert.equal(test.rows.length, 3)
     assert.equal(train.rows.length, 7)
   })
 
   test('puts every row in exactly one block', () => {
-    const { train, test } = data.split({ test: 0.3, seed: 42 })
+    const { train, test } = points.split({ test: 0.3, seed: 42 })
     assert.deepEqual(
       [...ids(train), ...ids(test)].toSorted((a, b) => a - b),
-      ids(data)
+      ids(points)
     )
   })
 
   test('gives the same blocks for the same seed', () => {
-    const first = data.split({ test: 0.3, seed: 42 })
-    const second = data.split({ test: 0.3, seed: 42 })
+    const first = points.split({ test: 0.3, seed: 42 })
+    const second = points.split({ test: 0.3, seed: 42 })
     assert.deepEqual(ids(first.test), ids(second.test))
     assert.deepEqual(ids(first.train), ids(second.train))
   })
 
   test('gives different blocks for a different seed', () => {
     assert.notDeepEqual(
-      ids(data.split({ test: 0.3, seed: 42 }).test),
-      ids(data.split({ test: 0.3, seed: 43 }).test)
+      ids(points.split({ test: 0.3, seed: 42 }).test),
+      ids(points.split({ test: 0.3, seed: 43 }).test)
     )
   })
 
   test('shares the frozen records instead of copying them', () => {
-    const { train, test } = data.split({ test: 0.3, seed: 42 })
+    const { train, test } = points.split({ test: 0.3, seed: 42 })
     for (const row of [...train.rows, ...test.rows]) {
-      assert.ok(data.rows.includes(row))
+      assert.ok(points.rows.includes(row))
     }
   })
 
   test('freezes the result, each block and its rows', () => {
-    const result = data.split({ test: 0.3, seed: 42 })
+    const result = points.split({ test: 0.3, seed: 42 })
     assert.ok(Object.isFrozen(result))
     for (const block of [result.train, result.test]) {
       assert.ok(Object.isFrozen(block))
@@ -88,7 +88,7 @@ describe('dataset.split', () => {
   })
 
   test('holds out a validation fraction when asked for', () => {
-    const { train, validation, test } = data.split({
+    const { train, validation, test } = points.split({
       validation: 0.2,
       test: 0.3,
       seed: 42
@@ -100,18 +100,18 @@ describe('dataset.split', () => {
       [...ids(train), ...ids(validation), ...ids(test)].toSorted(
         (a, b) => a - b
       ),
-      ids(data)
+      ids(points)
     )
   })
 
   test('only adds a validation block when asked for', () => {
-    assert.ok(!('validation' in data.split({ test: 0.3, seed: 42 })))
+    assert.ok(!('validation' in points.split({ test: 0.3, seed: 42 })))
   })
 
   test('keeps the same test block when validation is added', () => {
     // Validation comes out of what would have been training data
-    const twoWay = data.split({ test: 0.3, seed: 42 })
-    const threeWay = data.split({ validation: 0.2, test: 0.3, seed: 42 })
+    const twoWay = points.split({ test: 0.3, seed: 42 })
+    const threeWay = points.split({ validation: 0.2, test: 0.3, seed: 42 })
     assert.deepEqual(ids(threeWay.test), ids(twoWay.test))
     for (const id of ids(threeWay.validation)) {
       assert.ok(ids(twoWay.train).includes(id))
@@ -119,7 +119,11 @@ describe('dataset.split', () => {
   })
 
   test('freezes the validation block and its rows', () => {
-    const { validation } = data.split({ validation: 0.2, test: 0.3, seed: 42 })
+    const { validation } = points.split({
+      validation: 0.2,
+      test: 0.3,
+      seed: 42
+    })
     assert.ok(Object.isFrozen(validation))
     assert.ok(Object.isFrozen(validation.rows))
   })
@@ -127,7 +131,7 @@ describe('dataset.split', () => {
 
 describe('dataset.split options', () => {
   const rejects = (options: object, message: string) =>
-    assert.throws(() => data.split(options as never), {
+    assert.throws(() => points.split(options as never), {
       name: 'RangeError',
       message
     })
@@ -172,26 +176,26 @@ describe('dataset.split options', () => {
   })
 
   test('accepts the seed bounds', () => {
-    data.split({ test: 0.2, seed: 0 })
-    data.split({ test: 0.2, seed: 4294967295 })
+    points.split({ test: 0.2, seed: 0 })
+    points.split({ test: 0.2, seed: 4294967295 })
   })
 
   test('rejects a split that rounds the training block away', () => {
     // 0.6 of 2 rows rounds up to 2
-    const pair = ml.dataset(points, [{ id: 0 }, { id: 1 }])
+    const pair = ml.dataset(pointSchema, [{ id: 0 }, { id: 1 }])
     assert.throws(() => pair.split({ test: 0.6, seed: 42 }), {
       name: 'RangeError',
       message:
         'dataset.split(): 2 rows leave no rows for training after holding out 2. Use smaller fractions or more rows'
     })
     // 0.3 + 0.3 of 3 rows rounds up to 1 + 1, leaving 1
-    const three = ml.dataset(points, [{ id: 0 }, { id: 1 }, { id: 2 }])
+    const three = ml.dataset(pointSchema, [{ id: 0 }, { id: 1 }, { id: 2 }])
     const { train } = three.split({ validation: 0.3, test: 0.3, seed: 42 })
     assert.equal(train.rows.length, 1)
   })
 
   test('rejects an empty dataset', () => {
-    const empty = ml.dataset(points, [])
+    const empty = ml.dataset(pointSchema, [])
     assert.throws(() => empty.split({ test: 0.2, seed: 42 }), {
       name: 'RangeError',
       message: 'dataset.split(): the dataset has no rows'

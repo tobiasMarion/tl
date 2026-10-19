@@ -14,11 +14,11 @@ const Penguin = z.object({
   isAdult: z.boolean()
 })
 
-const penguins = ml.fromSchema(Penguin)
+const penguinSchema = ml.fromSchema(Penguin)
 
 type _record = Expect<
   Equal<
-    typeof penguins.infer,
+    typeof penguinSchema.infer,
     {
       species: 'Adelie' | 'Chinstrap' | 'Gentoo'
       isAdult: boolean
@@ -30,13 +30,13 @@ type _record = Expect<
 
 type _species = Expect<
   Equal<
-    typeof penguins.fields.species,
+    typeof penguinSchema.fields.species,
     CategoryField<'Adelie' | 'Chinstrap' | 'Gentoo'>
   >
 >
 
 type _optional = Expect<
-  Equal<typeof penguins.fields.billLengthMm, Optional<NumberField>>
+  Equal<typeof penguinSchema.fields.billLengthMm, Optional<NumberField>>
 >
 
 const Observation = z.object({
@@ -51,14 +51,14 @@ ml.fromSchema(Observation)
 // @ts-expect-error — observedAt still needs an override
 ml.fromSchema(Observation, { notes: ml.category(['calm']) })
 
-const observations = ml.fromSchema(Observation, {
+const observationSchema = ml.fromSchema(Observation, {
   notes: ml.category(['calm', 'agitated']),
   observedAt: ml.timestamp()
 })
 
 type _overrides = Expect<
   Equal<
-    typeof observations.infer,
+    typeof observationSchema.infer,
     {
       species: 'Adelie' | 'Gentoo'
       notes: 'calm' | 'agitated'

@@ -13,10 +13,10 @@ const Penguin = z.object({
 })
 
 describe('ml.fromSchema with Zod', () => {
-  const penguins = ml.fromSchema(Penguin)
+  const penguinSchema = ml.fromSchema(Penguin)
 
   test('maps every field', () => {
-    const { fields } = penguins
+    const { fields } = penguinSchema
     assert.equal(fields.species.kind, 'category')
     assert.deepEqual(fields.species.categories, [
       'Adelie',
@@ -30,7 +30,7 @@ describe('ml.fromSchema with Zod', () => {
   })
 
   test('keeps the order of the Zod object', () => {
-    assert.deepEqual(penguins.keys, [
+    assert.deepEqual(penguinSchema.keys, [
       'species',
       'island',
       'billLengthMm',
@@ -41,7 +41,7 @@ describe('ml.fromSchema with Zod', () => {
   })
 
   test('marks optional and nullable fields as optional', () => {
-    const { fields } = penguins
+    const { fields } = penguinSchema
     assert.equal(fields.billLengthMm.isOptional, true)
     assert.equal(fields.flipperLengthMm.isOptional, true)
     assert.equal(fields.species.isOptional, false)
@@ -50,7 +50,7 @@ describe('ml.fromSchema with Zod', () => {
   test('validates with the TL rules', () => {
     assert.throws(
       () =>
-        penguins.parse({
+        penguinSchema.parse({
           species: 'Emperor',
           island: 'Dream',
           flipperLengthMm: null,
@@ -72,19 +72,19 @@ describe('ml.fromSchema with Zod', () => {
       message: /can't map 'notes', 'observedAt' automatically/
     })
 
-    const observations = ml.fromSchema(Observation, {
+    const observationSchema = ml.fromSchema(Observation, {
       notes: ml.category(['calm', 'agitated']),
       observedAt: ml.timestamp()
     })
-    assert.equal(observations.fields.notes.kind, 'category')
-    assert.equal(observations.fields.observedAt.kind, 'timestamp')
+    assert.equal(observationSchema.fields.notes.kind, 'category')
+    assert.equal(observationSchema.fields.observedAt.kind, 'timestamp')
   })
 
   test('lets overrides replace mapped fields', () => {
-    const penguins = ml.fromSchema(Penguin, {
+    const penguinSchema = ml.fromSchema(Penguin, {
       species: ml.category(['Gentoo', 'Adelie', 'Chinstrap'])
     })
-    assert.deepEqual(penguins.fields.species.categories, [
+    assert.deepEqual(penguinSchema.fields.species.categories, [
       'Gentoo',
       'Adelie',
       'Chinstrap'
@@ -115,8 +115,12 @@ describe('ml.fromSchema with Zod', () => {
 
 describe('TL features as a Standard Schema', () => {
   test('can be used where Zod accepts a Standard Schema', async () => {
-    const penguins = ml.features({ species: ml.category(['Adelie', 'Gentoo']) })
-    const result = await penguins['~standard'].validate({ species: 'Gentoo' })
+    const penguinSchema = ml.features({
+      species: ml.category(['Adelie', 'Gentoo'])
+    })
+    const result = await penguinSchema['~standard'].validate({
+      species: 'Gentoo'
+    })
     assert.deepEqual(result, { value: { species: 'Gentoo' } })
   })
 })

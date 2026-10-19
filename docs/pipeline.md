@@ -4,7 +4,7 @@ The pipeline is a guided builder: each method returns a new type, and that type 
 
 ```ts
 const model = ml
-  .pipeline(features)
+  .pipeline(schema)
   .missing({ age: 'median' })
   .encode('employment', { unknown: 'error' })
   .scale(['age', 'income'])
@@ -16,7 +16,7 @@ const fitted = model.fit(train)
 ## Workflow
 
 ```
-features ─► pipeline ─► missing / encode / scale ─► estimator ─► fit ─► evaluate / predict
+schema ─► pipeline ─► missing / encode / scale ─► estimator ─► fit ─► evaluate / predict
 ```
 
 `fit` does the following:

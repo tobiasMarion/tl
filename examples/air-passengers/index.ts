@@ -10,7 +10,7 @@ const rows: unknown[] = raw
 
 // ── M1: Feature DSL ──────────────────────────────────────────────────────────
 
-const airline = ml.features({
+const airPassengerSchema = ml.features({
   month: ml.timestamp(), // the first day of each month, in UTC
   passengers: ml.number()
 })
@@ -18,12 +18,12 @@ const airline = ml.features({
 // ── M2: Series, split and cross-validation ───────────────────────────────────
 
 // The entry point for training rows: validated and sorted by time, once, here.
-const data = ml.series(airline, rows, { time: 'month' })
-console.log(`${data.rows.length} months of passengers`)
+const airPassengers = ml.series(airPassengerSchema, rows, { time: 'month' })
+console.log(`${airPassengers.rows.length} months of passengers`)
 
 // The last year is the test block, kept out of every choice below. A target
 // that looks one month ahead needs a gap of at least one month.
-const { train, test } = data.split({
+const { train, test } = airPassengers.split({
   testFrom: '1960-01-01',
   gap: { months: 1 }
 })
@@ -59,7 +59,7 @@ console.log(`\n${rolling.folds(train)[0]}`)
 // ── M5: Pipeline, backtest and metrics ───────────────────────────────────────
 
 // const model = ml
-//   .pipeline(data)
+//   .pipeline(airPassengers)
 //   .target('passengers', { transform: 'log-return', horizon: 1 })
 //   .lag('passengers', [1, 12]) // last month and the same month last year
 //   .missing({ warmup: 'drop' })

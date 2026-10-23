@@ -24,7 +24,7 @@ Each error gets a status:
 | S1 | Training on the test block, or evaluating on the training block | compile (roles) | compile at `fit` (M3) and `evaluate` (M5) |
 | S2 | Splitting the test block again, to carve validation out of it | compile | — |
 | S3 | Choosing hyperparameters or models by their test score | silent | compile: the search only sees `Train` (M6) |
-| S4 | Fitting preprocessing (imputation, scaling, encoding) on all the data before the split | silent | compile: transformers fit on `Train` (M3, M5) |
+| S4 | Fitting preprocessing (imputation, scaling, encoding) on all the data before the split | compile (`pipeline.fit` takes a `Train`, and the pipeline starts from a schema, not from data) | — |
 | S5 | Selecting features with all the data before the split | silent | — |
 | S6 | Oversampling before the split, so copies of a row land in both blocks | silent | — |
 | S7 | The same record in train and test | silent | — |
@@ -56,4 +56,4 @@ S1 is already caught by the types: a `Test` isn't assignable to `Train`. Nothing
 | ID | Error | Today | Planned |
 |----|-------|-------|---------|
 | D1 | Invalid values read silently: unknown categories, impossible dates such as `'2025-02-30'` | runtime | — |
-| D2 | Missing values filled or dropped by a default nobody chose | runtime (required fields) | required policy per optional field (M3) |
+| D2 | Missing values filled or dropped by a default nobody chose | runtime (required fields); required (a policy per optional field before `matrix()`) | — |

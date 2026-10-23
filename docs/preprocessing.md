@@ -125,7 +125,7 @@ Categories get a numeric encoding from the schema, with no step needed:
 .encode({ bodyCondition: 'one-hot' }) // an orderedCategory as one-hot
 ```
 
-An `ml.category` has no order, so `'position'` isn't offered for it. A field's encoding can change only while nothing has used it: once it is scaled or in a KNN's `using`, `encode` no longer accepts it. The default shows in the hover of `ml.category` and `ml.orderedCategory` and in the printed fitted state.
+`'one-hot'` is the only override: `'position'` is already the default of an ordered category, and an `ml.category` has no order, so it can't have one. A field's encoding can change only while nothing has used it: once it is scaled or in a KNN's `using`, `encode` no longer accepts it. The default shows in the hover of `ml.category` and `ml.orderedCategory` and in the printed fitted state.
 
 **Columns come from the schema, not from `fit`.** One-hot columns are the declared categories, so every block, every fold and every production record gets the same columns in the same order, whatever categories a training block happened to hold. There is no policy for unknown categories: `parse` and `ml.dataset` reject a value the schema doesn't declare, so it can't reach `transform`. A category that is declared but absent from the training block, common in small cross-validation folds, is not an error: its column is all zero in training, and the fitted state reports it.
 

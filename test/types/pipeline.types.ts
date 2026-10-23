@@ -31,20 +31,23 @@ const preparedValidation = fitted.transform(validation)
 const preparedTest = fitted.transform(test)
 
 type _train = Expect<
-  Equal<typeof preparedTrain, Prepared<S, 'species', 'bodyMassG', 'train'>>
+  Equal<
+    typeof preparedTrain,
+    Prepared<S, 'species', 'bodyMassG', never, 'train'>
+  >
 >
 type _validation = Expect<
   Equal<
     typeof preparedValidation,
-    Prepared<S, 'species', 'bodyMassG', 'validation'>
+    Prepared<S, 'species', 'bodyMassG', never, 'validation'>
   >
 >
 type _test = Expect<
-  Equal<typeof preparedTest, Prepared<S, 'species', 'bodyMassG', 'test'>>
+  Equal<typeof preparedTest, Prepared<S, 'species', 'bodyMassG', never, 'test'>>
 >
 
 // @ts-expect-error — a prepared test block isn't a prepared training block
-export const testAsTrain: Prepared<S, 'species', 'bodyMassG', 'train'> =
+export const testAsTrain: Prepared<S, 'species', 'bodyMassG', never, 'train'> =
   preparedTest
 
 // @ts-expect-error — preprocessing learns only from training data
@@ -173,3 +176,42 @@ ml.pipeline(surveySchema).missing({ age: 'drop' })
 
 // @ts-expect-error — 'age' already has a policy
 filled.missing({ age: 'mean' })
+
+// ── encode ───────────────────────────────────────────────────────────────────
+
+const reviewSchema = ml
+  .features({
+    rating: ml.number(),
+    condition: ml.orderedCategory(['poor', 'fair', 'good']),
+    size: ml.orderedCategory(['small', 'large']),
+    color: ml.category(['red', 'blue'])
+  })
+  .target('rating')
+const reviewTrain = ml
+  .dataset(reviewSchema, [])
+  .split({ test: 0.5, seed: 1 }).train
+const encoded = ml.pipeline(reviewSchema).encode({ condition: 'one-hot' })
+const encodedMatrix = encoded.fit(reviewTrain).transform(reviewTrain).matrix()
+type _encodedColumns = Expect<
+  Equal<
+    (typeof encodedMatrix.columns)[number],
+    | 'condition=poor'
+    | 'condition=fair'
+    | 'condition=good'
+    | 'size'
+    | 'color=red'
+    | 'color=blue'
+  >
+>
+
+// @ts-expect-error — a category is always one-hot
+ml.pipeline(reviewSchema).encode({ color: 'one-hot' })
+
+// @ts-expect-error — 'position' is the default; only 'one-hot' overrides it
+ml.pipeline(reviewSchema).encode({ size: 'position' })
+
+// @ts-expect-error — 'condition' is already one-hot
+encoded.encode({ condition: 'one-hot' })
+
+// @ts-expect-error — no ordered category is left to encode
+encoded.encode({ size: 'one-hot' }).encode({ size: 'one-hot' })

@@ -1,5 +1,5 @@
 import type { AnyField, Shape } from '../features/index.ts'
-import type { Row } from './step.ts'
+import type { Row, Step } from './step.ts'
 
 /** One column of the matrix and how to read it from a prepared record. */
 export type Column = {
@@ -100,3 +100,16 @@ export const describeEncoding = (
       }`
     ]
   })
+
+/**
+ * Records an encoding override. Encoding learns nothing, so the step leaves
+ * rows as they are; the matrix reads the override from the configuration.
+ */
+export const encodeStep = (
+  overrides: Readonly<Record<string, 'one-hot'>>
+): Step => ({
+  label: `encode   ${Object.entries(overrides)
+    .map(([key, encoding]) => `${key}: ${encoding}`)
+    .join(', ')}`,
+  fit: () => ({ transform: rows => [...rows], describe: () => '' })
+})

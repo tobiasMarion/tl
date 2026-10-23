@@ -154,3 +154,43 @@ describe('matrix', () => {
     )
   })
 })
+
+describe('encode', () => {
+  const reviewSchema = ml.features({
+    condition: ml.orderedCategory(['poor', 'fair', 'good']),
+    rating: ml.number()
+  })
+  const { train } = ml
+    .dataset(reviewSchema, [
+      { condition: 'fair', rating: 3 },
+      { condition: 'good', rating: 5 },
+      { condition: 'poor', rating: 1 }
+    ])
+    .split({ test: 0.3, seed: 1 })
+
+  test('turns an ordered category into one-hot columns', () => {
+    const pipeline = ml.pipeline(reviewSchema).encode({ condition: 'one-hot' })
+    const matrix = pipeline.fit(train).transform(train).matrix()
+    assert.deepEqual(matrix.columns, [
+      'condition=poor',
+      'condition=fair',
+      'condition=good',
+      'rating'
+    ])
+    train.rows.forEach((row, i) => {
+      const position = ['poor', 'fair', 'good'].indexOf(row.condition)
+      assert.deepEqual(
+        matrix.values[i]?.slice(0, 3),
+        [0, 1, 2].map(c => (c === position ? 1 : 0))
+      )
+    })
+    assert.equal(
+      plain(String(pipeline)),
+      'pipeline\n  encode   condition: one-hot'
+    )
+    assert.match(
+      plain(String(pipeline.fit(train))),
+      /condition: one-hot \(poor, fair, good\)/
+    )
+  })
+})

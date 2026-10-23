@@ -71,15 +71,13 @@ console.log(folds[0])
 
 // const model = ml
 //   .pipeline(penguinSchema)
-//   .target('species')
 //   .missing({
 //     billLengthMm: 'median',
 //     billDepthMm: 'median',
 //     flipperLengthMm: 'median',
 //     bodyMassG: 'median',
-//     sex: 'drop'
+//     sex: 'mode'
 //   })
-//   .encode(['island', 'sex', 'bodyCondition'], { unknown: 'error' })
 //   .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
 //   .estimator(ml.knn({ k: 5, distance: 'euclidean' }))
 

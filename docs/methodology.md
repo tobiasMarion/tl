@@ -21,7 +21,7 @@ Each error gets a status:
 
 | ID | Error | Today | Planned |
 |----|-------|-------|---------|
-| S1 | Training on the test block, or evaluating on the training block | compile (roles) | compile at `fit`/`evaluate` (M5) |
+| S1 | Training on the test block, or evaluating on the training block | compile (roles) | compile at `fit` (M3) and `evaluate` (M5) |
 | S2 | Splitting the test block again, to carve validation out of it | compile | — |
 | S3 | Choosing hyperparameters or models by their test score | silent | compile: the search only sees `Train` (M6) |
 | S4 | Fitting preprocessing (imputation, scaling, encoding) on all the data before the split | silent | compile: transformers fit on `Train` (M3, M5) |
@@ -29,7 +29,7 @@ Each error gets a status:
 | S6 | Oversampling before the split, so copies of a row land in both blocks | silent | — |
 | S7 | The same record in train and test | silent | — |
 
-S1 is already caught by the types: a `Test` isn't assignable to `Train`. Nothing consumes a block until M5, which is why the planned column repeats it.
+S1 is already caught by the types: a `Test` isn't assignable to `Train`. Nothing consumes a block until `fit` in M3, which is why the planned column repeats it.
 
 ## Train and test aren't independent
 
@@ -41,7 +41,7 @@ S1 is already caught by the types: a `Test` isn't assignable to `Train`. Nothing
 | T4 | No gap between train and test, so the last training labels look into the test period | required (`gap`, in the split and in walk-forward) | — |
 | T5 | A gap shorter than the target's horizon | silent | compile or runtime against the target horizon (M5) |
 | T6 | Panel data cut at a different time per series, so one series trains on a period another is tested on | by design (one cut for every group) | — |
-| T7 | Features computed with future values, such as a centered rolling mean | silent | by design: lag and rolling only look back (M3) |
+| T7 | Features computed with future values, such as a centered rolling mean | silent | by design: lag and rolling only look back (M5) |
 | T8 | The same entity (patient, user) in train and test | silent | opt-in: group k-fold (after the MVP) |
 
 ## Evaluation

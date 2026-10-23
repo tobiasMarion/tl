@@ -59,7 +59,7 @@ console.log(`\n${rolling.folds(train)[0]}`)
 // ── M5: Pipeline, backtest and metrics ───────────────────────────────────────
 
 // const model = ml
-//   .pipeline(airPassengers)
+//   .pipeline(airPassengerSchema)
 //   .target('passengers', { transform: 'log-return', horizon: 1 })
 //   .lag('passengers', [1, 12]) // last month and the same month last year
 //   .missing({ warmup: 'drop' })

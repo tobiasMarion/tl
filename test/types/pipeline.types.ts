@@ -125,3 +125,51 @@ const unlabeled = ml
   .transform(points)
   .matrix()
 type _noY = Expect<Equal<typeof unlabeled.y, undefined>>
+
+// ── missing ──────────────────────────────────────────────────────────────────
+
+const surveySchema = ml
+  .features({
+    label: ml.number(),
+    age: ml.number().optional(),
+    smoker: ml.boolean().optional(),
+    city: ml.category(['Lisbon', 'Porto']).optional(),
+    score: ml.orderedCategory(['low', 'high']).optional()
+  })
+  .target('label')
+
+const filled = ml
+  .pipeline(surveySchema)
+  .missing({ age: 'median', smoker: 'mode' })
+  .missing({ city: { constant: 'Porto' }, score: 'error' })
+const surveyTrain = ml
+  .dataset(surveySchema, [])
+  .split({ test: 0.5, seed: 1 }).train
+const surveyMatrix = filled.fit(surveyTrain).transform(surveyTrain).matrix()
+type _filledRows = Expect<
+  Equal<
+    ReturnType<
+      ReturnType<typeof filled.fit>['transform']
+    >['rows'][number]['age'],
+    number
+  >
+>
+export const _surveyMatrix = surveyMatrix
+
+// @ts-expect-error — 'label' is the target, and required
+ml.pipeline(surveySchema).missing({ label: 'mean' })
+
+// @ts-expect-error — 'mode' is for categories and booleans
+ml.pipeline(surveySchema).missing({ age: 'mode' })
+
+// @ts-expect-error — 'mean' is for numbers
+ml.pipeline(surveySchema).missing({ city: 'mean' })
+
+// @ts-expect-error — a constant must be a declared category
+ml.pipeline(surveySchema).missing({ city: { constant: 'Faro' } })
+
+// @ts-expect-error — 'drop' isn't a policy: filter rows before ml.dataset
+ml.pipeline(surveySchema).missing({ age: 'drop' })
+
+// @ts-expect-error — 'age' already has a policy
+filled.missing({ age: 'mean' })

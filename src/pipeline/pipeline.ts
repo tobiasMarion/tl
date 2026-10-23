@@ -19,6 +19,7 @@ import type {
   Simplify
 } from '../features/infer.ts'
 import { columnsOf, describeEncoding } from '../preprocess/encode.ts'
+import { type MissingPolicy, missingStep } from '../preprocess/missing.ts'
 import type { Context, FittedStep, Row, Step } from '../preprocess/step.ts'
 
 /** A record after preprocessing: the fields in `Pending` may still be missing. */
@@ -83,6 +84,26 @@ export type Pipeline<
   T extends keyof S,
   Pending extends keyof S
 > = {
+  /**
+   * Chooses how to fill the missing values of optional fields. Every optional
+   * field needs a policy before `matrix()`. Statistics come from the training
+   * block, and a policy behaves the same in every block.
+   */
+  missing<const K extends Pending>(
+    // With nothing pending, the mapped type below would be {}, which takes
+    // any object: no field accepts a policy then.
+    policies: [Pending] extends [never]
+      ? { readonly [key: string]: never }
+      : {
+          readonly [Key in K]: S[Key] extends { readonly kind: 'number' }
+            ? 'mean' | 'median' | { readonly constant: number } | 'error'
+            : S[Key] extends { readonly kind: 'boolean' }
+              ? 'mode' | { readonly constant: boolean } | 'error'
+              : S[Key] extends { readonly categories: readonly (infer C)[] }
+                ? 'mode' | { readonly constant: C } | 'error'
+                : { readonly constant: number } | 'error'
+        }
+  ): Pipeline<S, T, Exclude<Pending, K>>
   /** Learns every step's state from a training block. */
   fit(train: Train<S>): Fitted<S, T, Pending>
 }
@@ -237,9 +258,15 @@ const describePipeline = (config: Config) =>
       : [dim(`pending: ${quoted(config.pending)} need a missing-value policy`)])
   ].join('\n')
 
-const build = (config: Config) =>
+const build = (config: Config): object =>
   printable(
     {
+      missing: (policies: Readonly<Record<string, MissingPolicy>>) =>
+        build({
+          ...config,
+          steps: [...config.steps, missingStep(config.fields, policies)],
+          pending: config.pending.filter(key => !(key in policies))
+        }),
       fit: (train: { readonly rows: readonly Row[] }) => {
         const context: Context = { scales: new Map() }
         const at = train.rows.map(row => positionOf(row))

@@ -34,3 +34,18 @@ export const show = (value: number) => String(Number(value.toPrecision(4)))
 /** `row 12`, or `the record` when it has no position. */
 export const rowName = (position: number | undefined) =>
   position === undefined ? 'the record' : `row ${position}`
+
+/**
+ * A value in the units of a field after its `scale` step, if it had one: an
+ * ordered category by its position. A field with no spread is only centered.
+ */
+export const toCurrent = (
+  value: unknown,
+  scale: Scale | undefined,
+  categories: readonly unknown[] | undefined
+): unknown => {
+  if (scale === undefined) return value
+  const x =
+    categories === undefined ? (value as number) : categories.indexOf(value)
+  return scale.std === 0 ? x - scale.mean : (x - scale.mean) / scale.std
+}

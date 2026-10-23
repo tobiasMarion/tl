@@ -79,10 +79,10 @@ Every optional field needs a policy:
 |--------------------|------------|---------------------------------------------------------------|
 | `'mean'`           | numbers    | the training mean                                             |
 | `'median'`         | numbers    | the training median                                           |
-| `'mode'`           | categories | the most frequent training category, ties by declared order   |
-| `{ constant: v }`  | any        | `v`, which must be a value the field accepts                  |
+| `'mode'`           | categories, booleans | the most frequent training value, ties by declared order (`false` before `true`) |
+| `{ constant: v }`  | any        | `v`, which must be a value the field accepts (milliseconds for a timestamp); after `scale`, it is scaled with the field |
 | `{ knn, using }`   | any        | the nearest training rows, see [KNN imputation](#knn-imputation) |
-| `'error'`          | any        | nothing: `transform` throws, naming the field and the row     |
+| `'error'`          | any        | nothing: `fit` or `transform` throws, naming the field and the row |
 
 `missing` can be called more than once, so some fields can be filled before `scale` and others after. A policy sees the field as it is at that point: a median after `scale` is the median of the scaled values. It behaves the same in `fit`, in `transform` and, later, in `predict`. Statistics ignore missing values and are computed once, in `fit`. A field whose training values are all missing has no mean, median or mode: `fit` throws and names it.
 

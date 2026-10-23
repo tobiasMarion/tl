@@ -11,18 +11,21 @@ const rows: unknown[] = process.argv.includes('--bad') ? badData : goodData
 
 // ── M1: Feature DSL ──────────────────────────────────────────────────────────
 
-const penguinSchema = ml.features({
-  species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
-  island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
-  billLengthMm: ml.number().optional(),
-  billDepthMm: ml.number().optional(),
-  flipperLengthMm: ml.number().optional(),
-  bodyMassG: ml.number().optional(),
-  sex: ml.category(['male', 'female']).optional(),
-  // Not in the original dataset: a made-up field-assessment score, from lowest
-  // to highest, to show ordered categories.
-  bodyCondition: ml.orderedCategory(['poor', 'fair', 'good'])
-})
+// The target is the field a model predicts: a category, so classification.
+const penguinSchema = ml
+  .features({
+    species: ml.category(['Adelie', 'Chinstrap', 'Gentoo']),
+    island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
+    billLengthMm: ml.number().optional(),
+    billDepthMm: ml.number().optional(),
+    flipperLengthMm: ml.number().optional(),
+    bodyMassG: ml.number().optional(),
+    sex: ml.category(['male', 'female']).optional(),
+    // Not in the original dataset: a made-up field-assessment score, from lowest
+    // to highest, to show ordered categories.
+    bodyCondition: ml.orderedCategory(['poor', 'fair', 'good'])
+  })
+  .target('species')
 
 type Penguin = typeof penguinSchema.infer
 

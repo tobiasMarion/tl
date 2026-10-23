@@ -44,7 +44,7 @@ const penguinSchema = ml.features({ ... }).target('species')
 
 `.target(field)` returns a new schema with the same fields, so one set of fields can serve several questions. The target:
 
-- decides the kind of problem: a `category` or `orderedCategory` is classification, a `number` is regression;
+- decides the kind of problem: a `number` is regression; a `boolean`, `category` or `orderedCategory` is classification. A timestamp can't be a target;
 - must be a required field. Rows without a label are a choice about the population, made before `ml.dataset` (see [Missing values](#missing-values));
 - is out of reach of every step: `missing`, `encode` and `scale` don't accept it;
 - comes out of the matrix apart, as `y`;

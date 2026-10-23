@@ -60,6 +60,7 @@ export type {
   OrderedCategoryField,
   RequiredField,
   Shape,
+  Targeted,
   TimestampField
 } from './features/index.ts'
 export { FeatureValidationError } from './features/index.ts'

@@ -81,7 +81,7 @@ See `examples/penguins`, where `bodyCondition` is a graded scale from `'poor'` t
 const penguinSchema = ml.features({ ... }).target('species')
 ```
 
-The target has to be a required field, and its kind decides the problem: a category is classification, a number is regression. See [Preprocessing](preprocessing.md#target) for what it changes downstream.
+The target has to be a required `number`, `boolean`, `category` or `orderedCategory`, and its kind decides the problem: a number is regression, the others are classification. A wrong field is a type error that lists the valid ones, and the key is kept as `targetKey`. See [Preprocessing](preprocessing.md#target) for what it changes downstream.
 
 ## Runtime validation
 

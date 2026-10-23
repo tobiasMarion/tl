@@ -29,16 +29,21 @@ export type Train<S extends Shape, O extends Origin = Origin> = {
   readonly [origin]: O
 }
 
+// Held-out blocks carry an origin too, though nothing reads it: without it, a
+// test block passed as a training block reports the missing origin instead of
+// `Type '"test"' is not assignable to type '"train"'`.
 export type Test<S extends Shape> = {
   readonly features: Features<S>
   readonly rows: readonly InferShape<S>[]
   readonly [role]: 'test'
+  readonly [origin]: Origin
 }
 
 export type Validation<S extends Shape> = {
   readonly features: Features<S>
   readonly rows: readonly InferShape<S>[]
   readonly [role]: 'validation'
+  readonly [origin]: Origin
 }
 
 /**

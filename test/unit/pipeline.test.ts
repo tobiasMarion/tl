@@ -52,8 +52,105 @@ describe('ml.pipeline', () => {
     )
   })
 
-  test('a fitted pipeline without steps says so', () => {
+  test('a fitted pipeline without steps prints the encoding', () => {
     const fitted = ml.pipeline(pointSchema).fit(train)
-    assert.equal(plain(String(fitted)), 'fitted pipeline: no steps')
+    assert.equal(plain(String(fitted)), 'fitted pipeline')
+  })
+})
+
+describe('matrix', () => {
+  const penguinSchema = ml
+    .features({
+      species: ml.category(['Adelie', 'Gentoo']),
+      island: ml.category(['Biscoe', 'Dream', 'Torgersen']),
+      billLengthMm: ml.number(),
+      bodyCondition: ml.orderedCategory(['poor', 'fair', 'good']),
+      isAdult: ml.boolean(),
+      observedAt: ml.timestamp()
+    })
+    .target('species')
+  const penguins = ml.dataset(penguinSchema, [
+    {
+      species: 'Adelie',
+      island: 'Dream',
+      billLengthMm: 39.1,
+      bodyCondition: 'good',
+      isAdult: true,
+      observedAt: 0
+    },
+    {
+      species: 'Gentoo',
+      island: 'Biscoe',
+      billLengthMm: 46.5,
+      bodyCondition: 'poor',
+      isAdult: false,
+      observedAt: 0
+    },
+    {
+      species: 'Adelie',
+      island: 'Biscoe',
+      billLengthMm: 40,
+      bodyCondition: 'fair',
+      isAdult: true,
+      observedAt: 0
+    }
+  ])
+  const { train } = penguins.split({ test: 0.3, seed: 1 })
+  const fitted = ml.pipeline(penguinSchema).fit(train)
+  const matrix = fitted.transform(train).matrix()
+
+  test('encodes fields from the schema, with the target apart', () => {
+    assert.deepEqual(matrix.columns, [
+      'island=Biscoe',
+      'island=Dream',
+      'island=Torgersen',
+      'billLengthMm',
+      'bodyCondition',
+      'isAdult'
+    ])
+    const expected = new Map([
+      [39.1, [0, 1, 0, 39.1, 2, 1]],
+      [46.5, [1, 0, 0, 46.5, 0, 0]],
+      [40, [1, 0, 0, 40, 1, 1]]
+    ])
+    assert.equal(matrix.values.length, 2)
+    train.rows.forEach((row, i) => {
+      assert.deepEqual(matrix.values[i], expected.get(row.billLengthMm))
+    })
+    assert.deepEqual(
+      matrix.y,
+      train.rows.map(row => row.species)
+    )
+  })
+
+  test('reports declared categories that training never had', () => {
+    assert.match(
+      plain(String(fitted)),
+      /island: one-hot \(Biscoe, Dream, Torgersen\), not in training: .*'Torgersen'/
+    )
+    assert.match(
+      plain(String(fitted)),
+      /bodyCondition: position \(poor < fair < good\)/
+    )
+    assert.match(plain(String(fitted)), /observedAt: left out \(timestamp\)/)
+  })
+
+  test('prints as a table numbered by position in the data', () => {
+    const table = plain(String(matrix)).split('\n')
+    assert.equal(table[0], "train matrix: 2 rows, 6 columns, target 'species'")
+    assert.match(table[1] ?? '', /^#\s+island=Biscoe\s+island=Dream/)
+  })
+
+  test('throws while a field still needs a missing-value policy', () => {
+    const schema = ml.features({ x: ml.number().optional() })
+    const { train } = ml
+      .dataset(schema, [{ x: 1 }, { x: 2 }])
+      .split({ test: 0.5, seed: 1 })
+    const prepared = ml.pipeline(schema).fit(train).transform(train)
+    assert.deepEqual(prepared.pending, ['x'])
+    assert.throws(
+      () => (prepared as { matrix(): unknown }).matrix(),
+      /'x' still need a missing-value policy/
+    )
   })
 })

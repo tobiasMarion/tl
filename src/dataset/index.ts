@@ -13,8 +13,8 @@ export {
 export type {
   Fold,
   Origin,
-  Prepared,
   Role,
+  RoleBrand,
   Test,
   Train,
   Validation

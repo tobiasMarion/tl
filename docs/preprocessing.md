@@ -115,6 +115,9 @@ Categories get a numeric encoding from the schema, with no step needed:
 |-----------------------|------------------|-------------------------------------------|
 | `ml.category`         | one-hot          | one per declared category, in declared order |
 | `ml.orderedCategory`  | position         | one, with the position in the declared order (`'poor'` → 0, `'fair'` → 1, `'good'` → 2) |
+| `ml.boolean`          | value            | one, with 1 for `true` and 0 for `false` |
+| `ml.number`           | value            | one, with the number |
+| `ml.timestamp`        | none yet         | none: a timestamp is left out of the matrix, and the fitted state says so |
 
 `encode` only overrides a default:
 
@@ -143,7 +146,7 @@ Standardizes numbers and ordered positions: `(x - mean) / std`, with the mean an
 `transform` keeps the block's role: a `Train` stays a `Train`, a `Test` stays a `Test`, so the rest of the workflow still knows what the block may be used for. The result has two views of the same data:
 
 - **`rows`:** prepared records, with missing values filled and numbers scaled. Optional fields with a policy become required. Categories keep their labels; encoding shows in the matrix.
-- **`matrix()`:** the numbers the estimator consumes. `columns` is a literal tuple of column names (`'billLengthMm'`, `'island=Biscoe'`, …), `values` is `number[][]`, and `y` holds the target when the schema has one.
+- **`matrix()`:** the numbers the estimator consumes. `columns` lists the column names in schema order, typed as the union of their literals (`'billLengthMm' | 'island=Biscoe' | …`; TypeScript doesn't keep the order of an object's keys, so it can't be a tuple). `values` is `number[][]`, one row per record, and `y` holds the target of each record, or is `undefined` for a schema without one.
 
 The matrix is public on purpose. It is exactly what the estimator will see, so being able to print it is part of trusting the model. It prints as a table like the [blocks](dataset.md), with `#` as the row's position in the original data:
 
@@ -187,7 +190,7 @@ Lag and rolling features, the target horizon and the warm-up of the first rows o
 
 ## Open questions
 
-- Timestamp fields in the matrix: features derived from dates, or leaving the field out.
+- Features derived from timestamps (year, month, day of the week), instead of leaving them out.
 - Dropping one one-hot column (a reference category) as an `encode` option, if the solver needs it.
 - KNN over incomplete `using` fields, with distances that skip missing values.
 - Custom user-defined transformers.

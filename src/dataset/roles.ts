@@ -47,13 +47,10 @@ export type Validation<S extends Shape> = {
 }
 
 /**
- * A block after preprocessing: its rows as `Row`, with the role of the block
- * they came from, so a prepared test block is still a test block.
+ * The role brand alone, for values derived from a block, such as a prepared
+ * block: a prepared test block is still a test block.
  */
-export type Prepared<Row, R extends Role> = {
-  readonly rows: readonly Row[]
-  readonly [role]: R
-}
+export type RoleBrand<R extends Role> = { readonly [role]: R }
 
 /** One cut of a training block: fit on `train`, score on `validation`. */
 export type Fold<S extends Shape, O extends Origin = Origin> = {
@@ -102,31 +99,20 @@ const block = <S extends Shape>(
 export const roleOf = (block: unknown): Role | undefined =>
   typeof block === 'object' && block !== null ? roles.get(block) : undefined
 
-/**
- * A prepared block. `rows` must line up with the source block's rows: each
- * prepared record takes the position of the record it came from.
- */
-export const preparedBlock = <Row extends object, R extends Role>(
-  source: { readonly rows: readonly object[] },
-  role: R,
-  fields: { readonly [key: string]: { readonly kind: string } },
-  rows: Row[]
-): Prepared<Row, R> => {
-  rows.forEach((record, i) => {
-    const position = positions.get(source.rows[i] as object)
-    if (position !== undefined) positions.set(record, position)
-  })
-  const frozen = Object.freeze(rows)
-  const prepared = printable({ rows: frozen }, () =>
-    describeBlock({
-      role: `prepared ${role}`,
-      fields,
-      rows: frozen as readonly Record<string, unknown>[],
-      position: record => positions.get(record)
-    })
-  )
-  roles.set(prepared, role)
-  return prepared as Prepared<Row, R>
+/** Position of a record in the dataset or series it came from. */
+export const positionOf = (record: object): number | undefined =>
+  positions.get(record)
+
+/** Gives `record` the position of `source`, so both print with the same number. */
+export const keepPosition = (source: object, record: object) => {
+  const position = positions.get(source)
+  if (position !== undefined) positions.set(record, position)
+}
+
+/** Records the role of a value derived from a block. */
+export const markRole = <T extends object>(value: T, role: Role): T => {
+  roles.set(value, role)
+  return value
 }
 
 export const trainBlock = <S extends Shape, O extends Origin>(

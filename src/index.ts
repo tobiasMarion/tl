@@ -37,10 +37,10 @@ export type {
   KFold,
   KFoldOptions,
   Origin,
-  Prepared,
   RandomSplitOptions,
   RandomSplitWithValidationOptions,
   Role,
+  RoleBrand,
   Series,
   SeriesOptions,
   Test,
@@ -68,5 +68,12 @@ export type {
   TimestampField
 } from './features/index.ts'
 export { FeatureValidationError } from './features/index.ts'
-export type { Fitted, Pipeline, PreparedRow } from './pipeline/index.ts'
+export type {
+  Columns,
+  Fitted,
+  Matrix,
+  Pipeline,
+  Prepared,
+  PreparedRow
+} from './pipeline/index.ts'
 export type { StandardSchemaV1 } from './standard-schema.ts'

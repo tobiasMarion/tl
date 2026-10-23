@@ -69,20 +69,36 @@ console.log(folds)
 console.log(folds[0])
 
 // ── M3: Preprocessing ────────────────────────────────────────────────────────
+
+// Built from the schema: nothing here has seen data yet. Every optional field
+// needs a missing-value policy, and KNN measures distances, so the numbers it
+// compares are scaled first.
+const pipeline = ml
+  .pipeline(penguinSchema)
+  .missing({
+    billLengthMm: 'median',
+    billDepthMm: 'median',
+    flipperLengthMm: 'median',
+    sex: 'mode'
+  })
+  .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
+  .missing({
+    bodyMassG: { knn: 3, using: ['billLengthMm', 'flipperLengthMm', 'island'] }
+  })
+console.log(pipeline)
+
+// fit learns every statistic from the training block only; transform applies
+// them to any block, which keeps its role. The matrix is what an estimator
+// will get: categories one-hot, the ordered category by position, the target
+// apart.
+const fitted = pipeline.fit(train)
+console.log(fitted)
+console.log(fitted.transform(test).matrix())
+
 // ── M5: Pipeline and metrics ─────────────────────────────────────────────────
 // ── M6: Second algorithm ─────────────────────────────────────────────────────
 
-// const model = ml
-//   .pipeline(penguinSchema)
-//   .missing({
-//     billLengthMm: 'median',
-//     billDepthMm: 'median',
-//     flipperLengthMm: 'median',
-//     bodyMassG: 'median',
-//     sex: 'mode'
-//   })
-//   .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
-//   .estimator(ml.knn({ k: 5, distance: 'euclidean' }))
+// const model = pipeline.estimator(ml.knn({ k: 5, distance: 'euclidean' }))
 
 // const fitted = model.fit(train)
 // console.log(fitted.evaluate(test, [ml.accuracy, ml.confusionMatrix]))

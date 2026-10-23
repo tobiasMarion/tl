@@ -57,7 +57,11 @@ export const mode = (values: readonly unknown[], order: readonly unknown[]) => {
 }
 
 const label = (policy: MissingPolicy) =>
-  typeof policy === 'string' ? policy : isKnn(policy) ? 'knn' : 'constant'
+  typeof policy === 'string'
+    ? policy
+    : isKnn(policy)
+      ? `knn ${policy.knn} over ${policy.using.join(', ')}`
+      : 'constant'
 
 const showValue = (value: unknown) =>
   typeof value === 'number'

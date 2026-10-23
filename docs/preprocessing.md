@@ -148,19 +148,53 @@ Standardizes numbers and ordered positions: `(x - mean) / std`, with the mean an
 - **`rows`:** prepared records, with missing values filled and numbers scaled. Optional fields with a policy become required. Categories keep their labels, except a scaled ordered category, which is its scaled position; encoding shows in the matrix.
 - **`matrix()`:** the numbers the estimator consumes. `columns` lists the column names in schema order, typed as the union of their literals (`'billLengthMm' | 'island=Biscoe' | …`; TypeScript doesn't keep the order of an object's keys, so it can't be a tuple). `values` is `number[][]`, one row per record, and `y` holds the target of each record, or is `undefined` for a schema without one.
 
-The matrix is public on purpose. It is exactly what the estimator will see, so being able to print it is part of trusting the model. It prints as a table like the [blocks](dataset.md), with `#` as the row's position in the original data:
+The matrix is public on purpose. It is exactly what the estimator will see, so being able to print it is part of trusting the model. It prints as a table like the [blocks](dataset.md), with `#` as the row's position in the original data. From `examples/penguins` (`npm run example`), where the pipeline fills three lengths with their median and `sex` with its mode, scales the numbers, and then fills `bodyMassG` from its 3 nearest training penguins:
+
+```ts
+const pipeline = ml
+  .pipeline(penguinSchema)
+  .missing({
+    billLengthMm: 'median',
+    billDepthMm: 'median',
+    flipperLengthMm: 'median',
+    sex: 'mode'
+  })
+  .scale(['billLengthMm', 'billDepthMm', 'flipperLengthMm', 'bodyMassG'])
+  .missing({
+    bodyMassG: { knn: 3, using: ['billLengthMm', 'flipperLengthMm', 'island'] }
+  })
+
+console.log(pipeline.fit(train).transform(test).matrix())
+```
 
 ```
-test matrix: 3 rows, 8 columns, target 'species'
- #  island=Biscoe  island=Dream  island=Torgersen  billLengthMm  flipperLengthMm  bodyMassG  sex=male  sex=female  species
- 4              0             0                 1        -0.884           -1.418     -0.567         0           1  Adelie
- 9              0             1                 0         0.912           -0.274     -0.871         1           0  Chinstrap
-12              1             0                 0         0.448            1.512      1.903         1           0  Gentoo
+test matrix: 2 rows, 10 columns, target 'species'
+#  island=Biscoe  island=Dream  island=Torgersen  billLengthMm  billDepthMm  flipperLengthMm  bodyMassG  sex=male  sex=female  bodyCondition  species
+2              0             0                 1        -1.286        0.357           -0.469     -1.169         0           1              1  Adelie
+8              0             1                 0        -0.225        0.711           -0.974     -0.855         0           1              0  Chinstrap
 ```
 
-The output above is a sketch; the real one replaces it once the matrix exists.
+The fitted pipeline prints its learned state: the value each policy fills with, how many rows KNN keeps, the means and standard deviations, the encoding of each field, and what was reported (categories absent from training, fields with no spread):
 
-The fitted pipeline prints its learned state too: the value each policy fills with, the neighbors KNN keeps, the encoding and columns of each category, the means and standard deviations, and what was reported (categories absent from training, constant fields).
+```
+fitted pipeline
+missing
+  billLengthMm: median 48.25
+  billDepthMm: median 17.65
+  flipperLengthMm: median 194.5
+  sex: mode 'male'
+scale
+  billLengthMm: mean 46.48, std 4.808
+  billDepthMm: mean 17.29, std 1.977
+  flipperLengthMm: mean 201.5, std 13.86
+  bodyMassG: mean 4275, std 876.8
+missing
+  bodyMassG: knn 3 over billLengthMm, flipperLengthMm, island (8 training rows with a value)
+encode
+  island: one-hot (Biscoe, Dream, Torgersen)
+  sex: one-hot (male, female)
+  bodyCondition: position (poor < fair < good)
+```
 
 ## Pending decisions
 

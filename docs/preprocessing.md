@@ -137,7 +137,7 @@ Full one-hot next to an intercept makes the columns linearly dependent. That is 
 .scale(['billLengthMm', 'flipperLengthMm', 'bodyMassG', 'bodyCondition'])
 ```
 
-Standardizes numbers and ordered positions: `(x - mean) / std`, with the mean and the population standard deviation of the training block. An ordered position needs it as much as a number does: a scale of ten levels goes from 0 to 9. A one-hot category isn't accepted.
+Standardizes numbers and ordered positions: `(x - mean) / std`, with the mean and the population standard deviation of the training block. In `rows`, a scaled ordered category becomes its scaled position, a number. An ordered position needs it as much as a number does: a scale of ten levels goes from 0 to 9. A one-hot category isn't accepted.
 
 `scale` learns from the values that are there, so it accepts a field that still has missing values; they stay missing, and the field stays incomplete until a `missing` step. A field with standard deviation 0 in training can't be divided: it is only centered, so it becomes 0, and the fitted state reports it.
 
@@ -145,7 +145,7 @@ Standardizes numbers and ordered positions: `(x - mean) / std`, with the mean an
 
 `transform` keeps the block's role: a `Train` stays a `Train`, a `Test` stays a `Test`, so the rest of the workflow still knows what the block may be used for. The result has two views of the same data:
 
-- **`rows`:** prepared records, with missing values filled and numbers scaled. Optional fields with a policy become required. Categories keep their labels; encoding shows in the matrix.
+- **`rows`:** prepared records, with missing values filled and numbers scaled. Optional fields with a policy become required. Categories keep their labels, except a scaled ordered category, which is its scaled position; encoding shows in the matrix.
 - **`matrix()`:** the numbers the estimator consumes. `columns` lists the column names in schema order, typed as the union of their literals (`'billLengthMm' | 'island=Biscoe' | …`; TypeScript doesn't keep the order of an object's keys, so it can't be a tuple). `values` is `number[][]`, one row per record, and `y` holds the target of each record, or is `undefined` for a schema without one.
 
 The matrix is public on purpose. It is exactly what the estimator will see, so being able to print it is part of trusting the model. It prints as a table like the [blocks](dataset.md), with `#` as the row's position in the original data:

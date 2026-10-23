@@ -33,22 +33,31 @@ const preparedTest = fitted.transform(test)
 type _train = Expect<
   Equal<
     typeof preparedTrain,
-    Prepared<S, 'species', 'bodyMassG', never, 'train'>
+    Prepared<S, 'species', 'bodyMassG', never, never, 'train'>
   >
 >
 type _validation = Expect<
   Equal<
     typeof preparedValidation,
-    Prepared<S, 'species', 'bodyMassG', never, 'validation'>
+    Prepared<S, 'species', 'bodyMassG', never, never, 'validation'>
   >
 >
 type _test = Expect<
-  Equal<typeof preparedTest, Prepared<S, 'species', 'bodyMassG', never, 'test'>>
+  Equal<
+    typeof preparedTest,
+    Prepared<S, 'species', 'bodyMassG', never, never, 'test'>
+  >
 >
 
 // @ts-expect-error — a prepared test block isn't a prepared training block
-export const testAsTrain: Prepared<S, 'species', 'bodyMassG', never, 'train'> =
-  preparedTest
+export const testAsTrain: Prepared<
+  S,
+  'species',
+  'bodyMassG',
+  never,
+  never,
+  'train'
+> = preparedTest
 
 // @ts-expect-error — preprocessing learns only from training data
 ml.pipeline(penguinSchema).fit(test)
@@ -215,3 +224,35 @@ encoded.encode({ condition: 'one-hot' })
 
 // @ts-expect-error — no ordered category is left to encode
 encoded.encode({ size: 'one-hot' }).encode({ size: 'one-hot' })
+
+// ── scale ────────────────────────────────────────────────────────────────────
+
+const scaled = ml
+  .pipeline(surveySchema)
+  .scale(['age', 'score'])
+  .missing({ age: 'mean', smoker: 'mode', city: 'mode', score: 'mode' })
+type ScaledRow = ReturnType<
+  ReturnType<typeof scaled.fit>['transform']
+>['rows'][number]
+
+// A scaled ordered category is its scaled position
+type _scaledScore = Expect<Equal<ScaledRow['score'], number>>
+type _unscaledCity = Expect<Equal<ScaledRow['city'], 'Lisbon' | 'Porto'>>
+
+// @ts-expect-error — 'age' is already scaled
+scaled.scale(['age'])
+
+// @ts-expect-error — a category is one-hot, not scaled
+ml.pipeline(surveySchema).scale(['city'])
+
+// @ts-expect-error — 'label' is the target
+ml.pipeline(surveySchema).scale(['label'])
+
+// @ts-expect-error — a scaled ordered category keeps its position encoding
+ml.pipeline(reviewSchema).scale(['condition']).encode({ condition: 'one-hot' })
+
+// @ts-expect-error — a one-hot ordered category isn't scaled
+encoded.scale(['condition'])
+
+// @ts-expect-error — scale needs at least one field
+ml.pipeline(surveySchema).scale([])

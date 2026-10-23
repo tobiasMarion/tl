@@ -24,12 +24,26 @@ import {
   encodeStep
 } from '../preprocess/encode.ts'
 import { type MissingPolicy, missingStep } from '../preprocess/missing.ts'
+import { scaleStep } from '../preprocess/scale.ts'
 import type { Context, FittedStep, Row, Step } from '../preprocess/step.ts'
 
-/** A record after preprocessing: the fields in `Pending` may still be missing. */
-export type PreparedRow<S extends Shape, Pending extends keyof S> = Simplify<
-  { -readonly [K in Exclude<keyof S, Pending>]: FieldValue<S[K]> } & {
-    -readonly [K in Pending]?: FieldValue<S[K]> | undefined
+/**
+ * A record after preprocessing: the fields in `Pending` may still be missing,
+ * and a scaled ordered category is its scaled position.
+ */
+export type PreparedRow<
+  S extends Shape,
+  Pending extends keyof S,
+  Scaled extends keyof S
+> = Simplify<
+  {
+    -readonly [K in Exclude<keyof S, Pending>]: K extends Scaled
+      ? number
+      : FieldValue<S[K]>
+  } & {
+    -readonly [K in Pending]?:
+      | (K extends Scaled ? number : FieldValue<S[K]>)
+      | undefined
   }
 >
 
@@ -76,10 +90,11 @@ export type Prepared<
   S extends Shape,
   T extends keyof S,
   Pending extends keyof S,
+  Scaled extends keyof S,
   OneHot extends keyof S,
   R extends Role
 > = RoleBrand<R> & {
-  readonly rows: readonly PreparedRow<S, Pending>[]
+  readonly rows: readonly PreparedRow<S, Pending, Scaled>[]
   /** Fields that still need a missing-value policy. `matrix()` needs none. */
   readonly pending: readonly Pending[]
   /** The matrix an estimator would get, once no field is pending. */
@@ -93,12 +108,14 @@ export type Prepared<
 /**
  * Preprocessing for records of a schema. `T` is the target, which no step
  * touches; `Pending` are the fields that still need a missing-value policy;
- * `OneHot` are the ordered categories `encode` made one-hot.
+ * `Scaled` are the fields `scale` standardized; `OneHot` are the ordered
+ * categories `encode` made one-hot.
  */
 export type Pipeline<
   S extends Shape,
   T extends keyof S,
   Pending extends keyof S,
+  Scaled extends keyof S,
   OneHot extends keyof S
 > = {
   /**
@@ -120,14 +137,14 @@ export type Pipeline<
                 ? 'mode' | { readonly constant: C } | 'error'
                 : { readonly constant: number } | 'error'
         }
-  ): Pipeline<S, T, Exclude<Pending, K>, OneHot>
+  ): Pipeline<S, T, Exclude<Pending, K>, Scaled, OneHot>
   /**
    * Overrides the default encoding of ordered categories: one-hot columns
    * instead of their position. Categories are always one-hot.
    */
   encode<
     const K extends {
-      [Key in keyof S]: Key extends T | OneHot
+      [Key in keyof S]: Key extends T | Scaled | OneHot
         ? never
         : S[Key] extends { readonly kind: 'ordered-category' }
           ? Key
@@ -137,7 +154,7 @@ export type Pipeline<
     // As in missing: with no field left to encode, nothing is accepted
     overrides: [
       {
-        [Key in keyof S]: Key extends T | OneHot
+        [Key in keyof S]: Key extends T | Scaled | OneHot
           ? never
           : S[Key] extends { readonly kind: 'ordered-category' }
             ? Key
@@ -146,9 +163,25 @@ export type Pipeline<
     ] extends [never]
       ? { readonly [key: string]: never }
       : { readonly [Key in K]: 'one-hot' }
-  ): Pipeline<S, T, Pending, OneHot | K>
+  ): Pipeline<S, T, Pending, Scaled, OneHot | K>
+  /**
+   * Standardizes numbers and ordered positions with the mean and standard
+   * deviation of the training block. Missing values are skipped and stay
+   * missing. Anything that measures distances needs it.
+   */
+  scale<
+    const K extends {
+      [Key in keyof S]: Key extends T | Scaled | OneHot
+        ? never
+        : S[Key] extends {
+              readonly kind: 'number' | 'ordered-category'
+            }
+          ? Key
+          : never
+    }[keyof S]
+  >(fields: readonly [K, ...K[]]): Pipeline<S, T, Pending, Scaled | K, OneHot>
   /** Learns every step's state from a training block. */
-  fit(train: Train<S>): Fitted<S, T, Pending, OneHot>
+  fit(train: Train<S>): Fitted<S, T, Pending, Scaled, OneHot>
 }
 
 /** A pipeline with the state each step learned from a training block. */
@@ -156,12 +189,15 @@ export type Fitted<
   S extends Shape,
   T extends keyof S,
   Pending extends keyof S,
+  Scaled extends keyof S,
   OneHot extends keyof S
 > = {
   /** Applies the learned state. The prepared block keeps the role of `block`. */
-  transform(block: Train<S>): Prepared<S, T, Pending, OneHot, 'train'>
-  transform(block: Validation<S>): Prepared<S, T, Pending, OneHot, 'validation'>
-  transform(block: Test<S>): Prepared<S, T, Pending, OneHot, 'test'>
+  transform(block: Train<S>): Prepared<S, T, Pending, Scaled, OneHot, 'train'>
+  transform(
+    block: Validation<S>
+  ): Prepared<S, T, Pending, Scaled, OneHot, 'validation'>
+  transform(block: Test<S>): Prepared<S, T, Pending, Scaled, OneHot, 'test'>
 }
 
 /** What the builder has declared so far. */
@@ -311,6 +347,11 @@ const build = (config: Config): object =>
           steps: [...config.steps, missingStep(config.fields, policies)],
           pending: config.pending.filter(key => !(key in policies))
         }),
+      scale: (keys: readonly string[]) =>
+        build({
+          ...config,
+          steps: [...config.steps, scaleStep(config.fields, keys)]
+        }),
       encode: (overrides: Readonly<Record<string, 'one-hot'>>) =>
         build({
           ...config,
@@ -346,10 +387,10 @@ const build = (config: Config): object =>
  */
 export function pipeline<S extends Shape, K extends keyof S & string>(
   schema: Targeted<S, K>
-): Pipeline<S, K, OptionalKeys<S>, never>
+): Pipeline<S, K, OptionalKeys<S>, never, never>
 export function pipeline<S extends Shape>(
   schema: Features<S>
-): Pipeline<S, never, OptionalKeys<S>, never>
+): Pipeline<S, never, OptionalKeys<S>, never, never>
 // The steps only see plain records, so the implementation returns the untyped
 // builder; the overloads carry the types.
 export function pipeline(

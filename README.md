@@ -175,7 +175,8 @@ Changes reach `main` only through pull requests. CI runs `check`, the build, and
 │   └── fixtures/             # synthetic data with known parameters
 ├── examples/                 # complete runnable workflows, one folder each
 │   ├── penguins/             # index.ts (pipeline), data.json, bad-data.json
-│   └── air-passengers/       # monthly time series, walk-forward
+│   ├── air-passengers/       # monthly time series, walk-forward
+│   └── scikit-learn/         # the penguins workflow in scikit-learn, as a reference (uv)
 └── docs/
     └── algorithms/
 ```

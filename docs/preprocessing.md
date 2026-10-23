@@ -100,7 +100,7 @@ Every optional field needs a policy:
 
 A missing value is filled from the `knn` training rows closest to the row being filled:
 
-- **Distance** is euclidean over the columns of the `using` fields, as they are at that point. Each of them must be complete and comparable: numbers and ordered positions must be scaled, and one-hot columns already are 0 or 1. A field that isn't is a type error that names it and the missing step. The field being filled and the target can't be in `using`, and `using` has no default: which fields define a neighbor changes the result.
+- **Distance** is euclidean over the columns of the `using` fields, as they are at that point. Each of them must be complete and comparable: numbers and ordered positions must be scaled, and one-hot columns already are 0 or 1. A field that isn't is a type error that lists the fields usable at that point. Timestamps have no encoding, so they can't be in it either. The field being filled and the target can't be in `using`, and `using` has no default: which fields define a neighbor changes the result.
 - **Neighbors** are training rows that have the value. In `fit` and `transform` alike they come from the training block only: a validation row never fills another one. Ties in distance go to the earlier row.
 - **The value** is the neighbors' mean for a number, in the field's current scale, and their most frequent category for a category, ties by declared order.
 - **Learned state:** the training rows that have the value, with their `using` columns. KNN keeps its training data; that is what the state is.

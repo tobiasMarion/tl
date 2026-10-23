@@ -129,13 +129,43 @@ export type Pipeline<
     policies: [Pending] extends [never]
       ? { readonly [key: string]: never }
       : {
-          readonly [Key in K]: S[Key] extends { readonly kind: 'number' }
-            ? 'mean' | 'median' | { readonly constant: number } | 'error'
-            : S[Key] extends { readonly kind: 'boolean' }
-              ? 'mode' | { readonly constant: boolean } | 'error'
-              : S[Key] extends { readonly categories: readonly (infer C)[] }
-                ? 'mode' | { readonly constant: C } | 'error'
-                : { readonly constant: number } | 'error'
+          readonly [Key in K]:
+            | (S[Key] extends { readonly kind: 'number' }
+                ? 'mean' | 'median' | { readonly constant: number } | 'error'
+                : S[Key] extends { readonly kind: 'boolean' }
+                  ? 'mode' | { readonly constant: boolean } | 'error'
+                  : S[Key] extends { readonly categories: readonly (infer C)[] }
+                    ? 'mode' | { readonly constant: C } | 'error'
+                    : { readonly constant: number } | 'error')
+            | (S[Key] extends { readonly kind: 'timestamp' }
+                ? never
+                : {
+                    /** How many training rows to take the value from. */
+                    readonly knn: number
+                    /**
+                     * The fields that define a neighbor: complete by now, and,
+                     * for numbers and ordered positions, scaled.
+                     */
+                    readonly using: readonly {
+                      [U in keyof S]: U extends T | Pending
+                        ? never
+                        : S[U] extends {
+                              readonly kind: 'number' | 'ordered-category'
+                            }
+                          ? U extends Scaled
+                            ? U
+                            : S[U] extends {
+                                  readonly kind: 'ordered-category'
+                                }
+                              ? U extends OneHot
+                                ? U
+                                : never
+                              : never
+                          : S[U] extends { readonly kind: 'timestamp' }
+                            ? never
+                            : U
+                    }[keyof S][]
+                  })
         }
   ): Pipeline<S, T, Exclude<Pending, K>, Scaled, OneHot>
   /**
@@ -344,7 +374,10 @@ const build = (config: Config): object =>
       missing: (policies: Readonly<Record<string, MissingPolicy>>) =>
         build({
           ...config,
-          steps: [...config.steps, missingStep(config.fields, policies)],
+          steps: [
+            ...config.steps,
+            missingStep(config.fields, config.oneHot, policies)
+          ],
           pending: config.pending.filter(key => !(key in policies))
         }),
       scale: (keys: readonly string[]) =>

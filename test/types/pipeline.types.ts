@@ -256,3 +256,63 @@ encoded.scale(['condition'])
 
 // @ts-expect-error — scale needs at least one field
 ml.pipeline(surveySchema).scale([])
+
+// ── knn ──────────────────────────────────────────────────────────────────────
+
+const birdSchema = ml
+  .features({
+    species: ml.category(['Adelie', 'Gentoo']),
+    island: ml.category(['Biscoe', 'Dream']),
+    billLengthMm: ml.number(),
+    condition: ml.orderedCategory(['poor', 'good']),
+    isAdult: ml.boolean(),
+    seenAt: ml.timestamp(),
+    sex: ml.category(['male', 'female']).optional(),
+    bodyMassG: ml.number().optional()
+  })
+  .target('species')
+
+ml.pipeline(birdSchema)
+  .scale(['billLengthMm', 'condition'])
+  .missing({ sex: 'mode' })
+  .missing({
+    bodyMassG: {
+      knn: 5,
+      using: ['billLengthMm', 'condition', 'island', 'isAdult', 'sex']
+    }
+  })
+
+// One-hot categories are comparable without scale
+ml.pipeline(birdSchema)
+  .encode({ condition: 'one-hot' })
+  .missing({ bodyMassG: { knn: 3, using: ['condition', 'island'] } })
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — a number has to be scaled to measure a distance
+  bodyMassG: { knn: 5, using: ['billLengthMm'] }
+})
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — an ordered position has to be scaled too
+  bodyMassG: { knn: 5, using: ['condition'] }
+})
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — 'sex' is still incomplete
+  bodyMassG: { knn: 5, using: ['island', 'sex'] }
+})
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — the target can't define a neighbor
+  bodyMassG: { knn: 5, using: ['species'] }
+})
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — a timestamp has no encoding
+  bodyMassG: { knn: 5, using: ['seenAt'] }
+})
+
+ml.pipeline(birdSchema).missing({
+  // @ts-expect-error — using has no default
+  bodyMassG: { knn: 5 }
+})

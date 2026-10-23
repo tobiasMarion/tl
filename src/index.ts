@@ -8,6 +8,7 @@ import {
   orderedCategory,
   timestamp
 } from './features/index.ts'
+import { pipeline } from './pipeline/index.ts'
 
 export const ml = Object.freeze({
   features,
@@ -20,7 +21,8 @@ export const ml = Object.freeze({
   dataset,
   series,
   kFold,
-  walkForward
+  walkForward,
+  pipeline
 })
 
 /** The record type described by a `Features` schema. */
@@ -35,8 +37,10 @@ export type {
   KFold,
   KFoldOptions,
   Origin,
+  Prepared,
   RandomSplitOptions,
   RandomSplitWithValidationOptions,
+  Role,
   Series,
   SeriesOptions,
   Test,
@@ -64,4 +68,5 @@ export type {
   TimestampField
 } from './features/index.ts'
 export { FeatureValidationError } from './features/index.ts'
+export type { Fitted, Pipeline, PreparedRow } from './pipeline/index.ts'
 export type { StandardSchemaV1 } from './standard-schema.ts'

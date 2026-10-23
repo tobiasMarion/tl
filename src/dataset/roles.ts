@@ -17,6 +17,9 @@ declare const origin: unique symbol
 /** What a block was cut from: a `Dataset` has no order, a `Series` is ordered by time. */
 export type Origin = 'dataset' | 'series'
 
+/** What a block may be used for. */
+export type Role = 'train' | 'validation' | 'test'
+
 // Type aliases, not interfaces: see Type quality in docs/principles.md.
 /** Rows to fit on. `O` is what it was cut from; `Train<S>` accepts both. */
 export type Train<S extends Shape, O extends Origin = Origin> = {
@@ -38,6 +41,15 @@ export type Validation<S extends Shape> = {
   readonly [role]: 'validation'
 }
 
+/**
+ * A block after preprocessing: its rows as `Row`, with the role of the block
+ * they came from, so a prepared test block is still a test block.
+ */
+export type Prepared<Row, R extends Role> = {
+  readonly rows: readonly Row[]
+  readonly [role]: R
+}
+
 /** One cut of a training block: fit on `train`, score on `validation`. */
 export type Fold<S extends Shape, O extends Origin = Origin> = {
   readonly train: Train<S, O>
@@ -55,17 +67,21 @@ export const numberRows = (rows: readonly object[]) => {
   })
 }
 
+// The role of every block, which preprocessing needs to keep it. Kept out of
+// the types, where the role is a brand.
+const roles = new WeakMap<object, Role>()
+
 // The roles and origins are type-only brands, so a frozen { features, rows }
 // is all a block needs at runtime, plus how it prints. These casts are the one
 // place where blocks are created; the splits pass in a new array of rows in
 // the order the block should keep.
 const block = <S extends Shape>(
-  role: 'train' | 'validation' | 'test',
+  role: Role,
   features: Features<S>,
   rows: InferShape<S>[]
 ) => {
   const frozen = Object.freeze(rows)
-  return printable({ features, rows: frozen }, () =>
+  const created = printable({ features, rows: frozen }, () =>
     describeBlock({
       role,
       fields: features.fields,
@@ -73,6 +89,39 @@ const block = <S extends Shape>(
       position: record => positions.get(record)
     })
   )
+  roles.set(created, role)
+  return created
+}
+
+/** The role of a block, or undefined for any other value. */
+export const roleOf = (block: unknown): Role | undefined =>
+  typeof block === 'object' && block !== null ? roles.get(block) : undefined
+
+/**
+ * A prepared block. `rows` must line up with the source block's rows: each
+ * prepared record takes the position of the record it came from.
+ */
+export const preparedBlock = <Row extends object, R extends Role>(
+  source: { readonly rows: readonly object[] },
+  role: R,
+  fields: { readonly [key: string]: { readonly kind: string } },
+  rows: Row[]
+): Prepared<Row, R> => {
+  rows.forEach((record, i) => {
+    const position = positions.get(source.rows[i] as object)
+    if (position !== undefined) positions.set(record, position)
+  })
+  const frozen = Object.freeze(rows)
+  const prepared = printable({ rows: frozen }, () =>
+    describeBlock({
+      role: `prepared ${role}`,
+      fields,
+      rows: frozen as readonly Record<string, unknown>[],
+      position: record => positions.get(record)
+    })
+  )
+  roles.set(prepared, role)
+  return prepared as Prepared<Row, R>
 }
 
 export const trainBlock = <S extends Shape, O extends Origin>(
